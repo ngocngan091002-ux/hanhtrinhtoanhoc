@@ -82,10 +82,21 @@ export const Navbar: React.FC = () => {
           </div>
         )}
 
-        {/* Right User Info */}
+        {/* Right User Info & Google Avatar */}
         <div className="flex items-center space-x-4">
-          <div className="hidden sm:flex items-center space-x-3 text-right">
-            <div>
+          <div className="flex items-center space-x-3 text-right">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="w-9 h-9 rounded-full border-2 border-amber-400 shadow-sm object-cover"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-sky-100 border border-sky-300 flex items-center justify-center font-bold text-sky-800 text-sm shadow-xs">
+                {profile.full_name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
+            <div className="hidden sm:block">
               <div className="font-bold text-sm text-slate-900">{profile.full_name}</div>
               <div className="text-[11px] text-slate-400 font-mono">{profile.email}</div>
             </div>
@@ -94,10 +105,10 @@ export const Navbar: React.FC = () => {
           <button
             onClick={signOut}
             className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center space-x-1 text-xs font-bold"
-            title="Đăng xuất"
+            title="Đăng xuất khỏi hệ thống"
           >
             <LogOut className="w-5 h-5" />
-            <span className="hidden sm:inline">Thoát</span>
+            <span className="hidden sm:inline">Đăng Xuất</span>
           </button>
         </div>
       </div>

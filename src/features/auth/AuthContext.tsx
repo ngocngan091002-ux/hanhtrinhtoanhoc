@@ -98,13 +98,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error && error.code === 'PGRST116') {
-        const role = (currentUser?.user_metadata?.role as UserRole) || selectedRole || 'student';
-        const newProfile: Partial<UserProfile> = {
+        // Profile does not exist yet -> New Google or Email account
+        const meta = currentUser?.user_metadata || {};
+        const metaRole = (meta.role as UserRole) || selectedRole || 'student';
+        
+        const newProfile: UserProfile = {
           id: userId,
           email: currentUser?.email || '',
-          full_name: currentUser?.user_metadata?.full_name || currentUser?.email?.split('@')[0] || 'Người dùng',
-          role: role,
-          avatar_url: currentUser?.user_metadata?.avatar_url || '',
+          full_name: meta.full_name || meta.name || currentUser?.email?.split('@')[0] || 'Người dùng Google',
+          role: metaRole,
+          avatar_url: meta.avatar_url || meta.picture || '',
+          created_at: new Date().toISOString(),
         };
 
         const { data: created, error: createErr } = await supabase
@@ -115,8 +119,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (!createErr && created) {
           setProfile(created as UserProfile);
+        } else {
+          setProfile(newProfile);
         }
       } else if (data) {
+        // Profile exists -> Preserve existing role & learning data!
+        const googleAvatar = currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture;
+        if (googleAvatar && !data.avatar_url) {
+          try {
+            await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', userId);
+            data.avatar_url = googleAvatar;
+          } catch (e) {}
+        }
         setProfile(data as UserProfile);
       }
     } catch (err) {
@@ -156,11 +170,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       provider: 'google',
       options: {
         redirectTo,
-        skipBrowserRedirect: true,
         queryParams: {
           access_type: 'offline',
-          prompt: 'consent',
-          role: role,
+          prompt: 'select_account',
         },
       },
     });
@@ -202,11 +214,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
     );
 
-    // Try upserting to Supabase DB profiles if possible
     try {
       await supabase.from('profiles').upsert(guestProfile);
     } catch (e) {
-      // Ignore DB network errors in offline/demo fallback mode
+      // Ignore DB network errors
     }
 
     setUser(guestUser);

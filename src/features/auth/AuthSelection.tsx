@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
-import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export const AuthSelection: React.FC = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, loginAsGuest, selectedRole, setSelectedRole } = useAuth();
@@ -12,6 +12,7 @@ export const AuthSelection: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -20,24 +21,29 @@ export const AuthSelection: React.FC = () => {
   const handleSubmitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setSuccessMessage(null);
+    setErrorMessage(null);
     setLoading(true);
 
     try {
       if (authMode === 'login') {
         setSuccessMessage('✅ Đăng nhập thành công! Đang chuyển hướng...');
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         try {
           await signInWithEmail(email, password);
-        } catch (err) {
+        } catch (err: any) {
+          setSuccessMessage(null);
+          setErrorMessage(err.message || 'Sai email hoặc mật khẩu!');
           await loginAsGuest(email.split('@')[0] || 'Người dùng', selectedRole, email);
         }
       } else {
-        setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang đưa bạn vào hệ thống...');
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang chuyển hướng...');
+        await new Promise((resolve) => setTimeout(resolve, 600));
         try {
           await signUpWithEmail(email, password, fullName, selectedRole);
           await signInWithEmail(email, password);
-        } catch (err) {
+        } catch (err: any) {
+          setSuccessMessage(null);
+          setErrorMessage(err.message || 'Lỗi khi đăng ký tài khoản!');
           await loginAsGuest(fullName || email.split('@')[0] || 'Người dùng', selectedRole, email);
         }
       }
@@ -49,20 +55,23 @@ export const AuthSelection: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
     setLoading(true);
-    setSuccessMessage('✅ Đăng nhập Google thành công! Đang chuyển hướng...');
-    await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
       if (isSupabaseConfigured) {
+        setSuccessMessage('🌐 Đang chuyển hướng sang trang xác thực tài khoản Google chính thức...');
         await signInWithGoogle(selectedRole);
       } else {
-        await loginAsGuest('Tài Khoản Google', selectedRole, 'ngocngan091002@gmail.com');
+        // Fallback for offline demo mode when Supabase env variables are unconfigured
+        setSuccessMessage('✅ Đăng nhập thành công với Tài Khoản Google!');
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, 'ngocngan091002@gmail.com');
       }
     } catch (err: any) {
-      // Instant 1-click Google auth fallback (zero Google Cloud / MFA setup required)
-      await loginAsGuest('Tài Khoản Google', selectedRole, 'ngocngan091002@gmail.com');
-    } finally {
+      setSuccessMessage(null);
+      setErrorMessage(`❌ Đăng nhập Google không thành công hoặc đã bị hủy: ${err.message || 'Vui lòng chọn lại tài khoản Google!'}`);
       setLoading(false);
     }
   };
@@ -152,6 +161,13 @@ export const AuthSelection: React.FC = () => {
             </div>
           )}
 
+          {errorMessage && (
+            <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Form Email + Password */}
           <form onSubmit={handleSubmitEmail} className="space-y-4">
             {authMode === 'register' && (
@@ -221,14 +237,14 @@ export const AuthSelection: React.FC = () => {
             <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400">hoặc</span></div>
           </div>
 
-          {/* Google Login Button */}
+          {/* Prominent Official Google Sign-In Button */}
           <button
             type="button"
             onClick={handleGoogleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center space-x-2 bg-slate-900 hover:bg-slate-800 text-white py-3 px-4 rounded-xl font-bold text-sm shadow-md transition-all active:scale-98 disabled:opacity-50"
+            className="w-full flex items-center justify-center space-x-3 bg-slate-950 hover:bg-slate-900 text-white py-3.5 px-4 rounded-2xl font-extrabold text-sm shadow-lg border border-slate-800 transition-all active:scale-98 disabled:opacity-50"
           >
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 fill-current shrink-0" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
