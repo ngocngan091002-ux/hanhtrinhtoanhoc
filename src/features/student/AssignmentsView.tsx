@@ -132,12 +132,26 @@ export const AssignmentsView: React.FC = () => {
     }
   };
 
+  const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
+  const lastTimeRef = React.useRef<number>(Date.now());
+
   const handleStartQuiz = (a: Assignment) => {
     setActiveAssignment(a);
     setAnswers({});
+    setQuestionTimes({});
+    lastTimeRef.current = Date.now();
   };
 
   const handleSelectOption = (questionId: string, option: string) => {
+    const now = Date.now();
+    const elapsed = Math.max(1, Math.round((now - lastTimeRef.current) / 1000));
+    lastTimeRef.current = now;
+
+    setQuestionTimes((prev) => ({
+      ...prev,
+      [questionId]: (prev[questionId] || 0) + elapsed,
+    }));
+
     setAnswers((prev) => ({
       ...prev,
       [questionId]: option,
@@ -160,6 +174,7 @@ export const AssignmentsView: React.FC = () => {
       student_id: user.id,
       student_name: studentRealName,
       answers_json: answers,
+      question_times_json: questionTimes,
       submitted_at: new Date().toISOString(),
       is_finalized: false,
     };
@@ -173,6 +188,7 @@ export const AssignmentsView: React.FC = () => {
         assignment_id: activeAssignment.id,
         student_id: user.id,
         answers_json: answers,
+        question_times_json: questionTimes,
         submitted_at: new Date().toISOString(),
       });
     } catch (err) {

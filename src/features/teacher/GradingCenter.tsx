@@ -3,7 +3,7 @@ import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { Submission, MathClass, Assignment, Question } from '../../types';
 import { suggestGrading } from '../../config/gemini';
-import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award } from 'lucide-react';
+import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award, Clock } from 'lucide-react';
 
 interface GradingCenterProps {
   currentClass?: MathClass | null;
@@ -462,7 +462,17 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                       <div className="space-y-3">
                         {questions.map((q, idx) => {
                           const studentAns = selectedSubmission.answers_json?.[q.id] || selectedSubmission.answers_json?.[`q_${idx}`] || (selectedSubmission.answers_json ? Object.values(selectedSubmission.answers_json)[idx] : undefined);
+                          const qTime = selectedSubmission.question_times_json?.[q.id] || selectedSubmission.question_times_json?.[`q_${idx}`] || (selectedSubmission.question_times_json ? Object.values(selectedSubmission.question_times_json)[idx] : undefined);
                           const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+
+                          const formatQuestionTime = (seconds?: number | string) => {
+                            if (!seconds) return '15 giây';
+                            const sec = typeof seconds === 'string' ? parseInt(seconds, 10) || 15 : seconds;
+                            if (sec < 60) return `${sec} giây`;
+                            const m = Math.floor(sec / 60);
+                            const s = sec % 60;
+                            return `${m} phút ${s > 0 ? s + 's' : ''}`;
+                          };
 
                           return (
                             <div key={q.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
@@ -471,15 +481,22 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                                   Câu {idx + 1}: {q.prompt}
                                 </div>
 
-                                {isCorrect ? (
-                                  <span className="text-emerald-600 font-extrabold text-xs bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg shrink-0">
-                                    ✓ Đúng
+                                <div className="flex items-center space-x-2 shrink-0">
+                                  <span className="text-sky-800 bg-sky-50 font-bold text-xs px-2.5 py-1 rounded-xl border border-sky-200 flex items-center space-x-1 shadow-xs">
+                                    <Clock className="w-3.5 h-3.5 text-sky-600" />
+                                    <span>{formatQuestionTime(qTime)}</span>
                                   </span>
-                                ) : (
-                                  <span className="text-rose-600 font-extrabold text-xs bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-lg shrink-0">
-                                    ✕ Sai
-                                  </span>
-                                )}
+
+                                  {isCorrect ? (
+                                    <span className="text-emerald-600 font-extrabold text-xs bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-xl shadow-xs">
+                                      ✓ Đúng
+                                    </span>
+                                  ) : (
+                                    <span className="text-rose-600 font-extrabold text-xs bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-xl shadow-xs">
+                                      ✕ Sai
+                                    </span>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Options Grid */}

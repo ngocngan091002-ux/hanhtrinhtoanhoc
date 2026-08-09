@@ -91,6 +91,7 @@ export interface Submission {
   assignment_id: string;
   student_id: string;
   answers_json: Record<string, string>;
+  question_times_json?: Record<string, number | string>;
   submitted_at: string;
   ai_suggested_score?: number;
   ai_suggested_feedback?: string;
