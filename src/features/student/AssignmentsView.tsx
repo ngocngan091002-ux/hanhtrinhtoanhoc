@@ -133,30 +133,49 @@ export const AssignmentsView: React.FC = () => {
   };
 
   const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
-  const lastTimeRef = React.useRef<number>(Date.now());
+  const activeQuestionStartRef = React.useRef<number>(Date.now());
+  const currentActiveQuestionRef = React.useRef<string>('');
+  const currentActiveQuestionIdxRef = React.useRef<number>(0);
+  const questionDurationsRef = React.useRef<Record<string, number>>({});
 
   const handleStartQuiz = (a: Assignment) => {
     setActiveAssignment(a);
     setAnswers({});
     setQuestionTimes({});
-    lastTimeRef.current = Date.now();
+    questionDurationsRef.current = {};
+    activeQuestionStartRef.current = Date.now();
+
+    const firstQ = a.questions_json?.[0];
+    currentActiveQuestionRef.current = firstQ?.id || 'q_0';
+    currentActiveQuestionIdxRef.current = 0;
+  };
+
+  const recordTimeForActiveQuestion = (nextQuestionId?: string, nextQuestionIdx?: number) => {
+    const now = Date.now();
+    const elapsed = Math.max(1, Math.round((now - activeQuestionStartRef.current) / 1000));
+    activeQuestionStartRef.current = now;
+
+    const curId = currentActiveQuestionRef.current;
+    const curIdx = currentActiveQuestionIdxRef.current;
+
+    if (curId) {
+      questionDurationsRef.current[curId] = (questionDurationsRef.current[curId] || 0) + elapsed;
+    }
+    questionDurationsRef.current[`q_${curIdx}`] = (questionDurationsRef.current[`q_${curIdx}`] || 0) + elapsed;
+
+    setQuestionTimes({ ...questionDurationsRef.current });
+
+    if (nextQuestionId !== undefined) {
+      currentActiveQuestionRef.current = nextQuestionId;
+    }
+    if (nextQuestionIdx !== undefined) {
+      currentActiveQuestionIdxRef.current = nextQuestionIdx;
+    }
   };
 
   const handleSelectOption = (questionId: string, option: string, qIdx?: number) => {
-    const now = Date.now();
-    const elapsed = Math.max(1, Math.round((now - lastTimeRef.current) / 1000));
-    lastTimeRef.current = now;
-
-    setQuestionTimes((prev) => {
-      const nextMap = {
-        ...prev,
-        [questionId]: (prev[questionId] || 0) + elapsed,
-      };
-      if (qIdx !== undefined) {
-        nextMap[`q_${qIdx}`] = (prev[`q_${qIdx}`] || 0) + elapsed;
-      }
-      return nextMap;
-    });
+    const targetIdx = qIdx !== undefined ? qIdx : 0;
+    recordTimeForActiveQuestion(questionId, targetIdx);
 
     setAnswers((prev) => ({
       ...prev,
@@ -172,6 +191,10 @@ export const AssignmentsView: React.FC = () => {
 
     setSubmitting(true);
 
+    // Finalize time recording for current active question
+    recordTimeForActiveQuestion();
+
+    const finalQuestionTimes = { ...questionDurationsRef.current };
     const studentRealName = profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Học sinh Nguyễn Thị Ngọc Ngân';
 
     const localSub: Submission = {
@@ -180,7 +203,7 @@ export const AssignmentsView: React.FC = () => {
       student_id: user.id,
       student_name: studentRealName,
       answers_json: answers,
-      question_times_json: questionTimes,
+      question_times_json: finalQuestionTimes,
       submitted_at: new Date().toISOString(),
       is_finalized: false,
     };
@@ -194,7 +217,7 @@ export const AssignmentsView: React.FC = () => {
         assignment_id: activeAssignment.id,
         student_id: user.id,
         answers_json: answers,
-        question_times_json: questionTimes,
+        question_times_json: finalQuestionTimes,
         submitted_at: new Date().toISOString(),
       });
     } catch (err) {
