@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { Submission, MathClass, Assignment } from '../../types';
+import { Submission, MathClass, Assignment, Question } from '../../types';
 import { suggestGrading } from '../../config/gemini';
 import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award } from 'lucide-react';
 
@@ -425,7 +425,35 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
               {/* Student Answers View */}
               {(() => {
                 const currentAssignment = assignments.find((a) => a.id === selectedAssignmentId);
-                const questions = currentAssignment?.questions_json || [];
+                let questions: Question[] = [];
+
+                if (currentAssignment?.questions_json) {
+                  if (Array.isArray(currentAssignment.questions_json)) {
+                    questions = currentAssignment.questions_json;
+                  } else if (typeof currentAssignment.questions_json === 'string') {
+                    try {
+                      questions = JSON.parse(currentAssignment.questions_json);
+                    } catch (e) {}
+                  }
+                }
+
+                // Fallback search in localStorage if React state questions array is empty
+                if (questions.length === 0 && selectedAssignmentId) {
+                  try {
+                    const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_KEY);
+                    if (raw) {
+                      const parsed: Assignment[] = JSON.parse(raw);
+                      const matched = parsed.find((a) => a.id === selectedAssignmentId || a.title === currentAssignment?.title);
+                      if (matched?.questions_json) {
+                        if (Array.isArray(matched.questions_json)) {
+                          questions = matched.questions_json;
+                        } else if (typeof matched.questions_json === 'string') {
+                          questions = JSON.parse(matched.questions_json);
+                        }
+                      }
+                    }
+                  } catch (e) {}
+                }
 
                 if (questions.length > 0) {
                   return (
@@ -457,7 +485,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                               {/* Options Grid */}
                               {q.options && q.options.length > 0 && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                  {q.options.map((opt, optIdx) => {
+                                  {q.options.map((opt: string, optIdx: number) => {
                                     const isStudentChoice = studentAns === opt;
                                     const isOptionCorrect = opt === q.correct_answer;
 
