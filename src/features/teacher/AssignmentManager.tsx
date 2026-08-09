@@ -560,12 +560,30 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                       className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none"
                       placeholder="Nhập nội dung câu hỏi mới..."
                     />
-                    <ImagePickerButton
-                      currentUrl={q.image_url}
-                      onSelectImage={(url) => handleUpdateQuestion(qIdx, { ...q, image_url: url })}
-                      onRemoveImage={() => handleUpdateQuestion(qIdx, { ...q, image_url: '' })}
-                      labelTooltip="Tải / chèn ảnh cho câu hỏi"
-                    />
+                    <label
+                      title="Tải ảnh câu hỏi từ thiết bị"
+                      className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs shadow-md cursor-pointer shrink-0 flex items-center space-x-1 transition-all active:scale-95"
+                    >
+                      <Plus className="w-4 h-4 text-white" />
+                      <ImageIcon className="w-4 h-4 text-white" />
+                      <span>+ 🖼️ Ảnh câu hỏi</span>
+                      <input
+                        type="file"
+                        accept="image/jpg,image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (uploadEvt) => {
+                              const base64 = uploadEvt.target?.result as string;
+                              handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
                   </div>
 
                   {/* Question Image Preview */}
@@ -612,7 +630,7 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                   {/* Options with + Image Buttons */}
                   <div className="space-y-1 pt-1">
                     <label className="text-[11px] font-bold text-slate-500 uppercase">
-                      Lựa chọn đáp án (Nhấn <span className="text-sky-600 font-extrabold">+ 🖼️</span> để tải/chèn ảnh riêng từng đáp án A, B, C, D):
+                      Lựa chọn đáp án (Nhấn nút <span className="text-sky-600 font-extrabold">+ 🖼️ Ảnh</span> để tải ảnh riêng từng đáp án A, B, C, D):
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {q.options?.map((opt, optIdx) => {
@@ -645,20 +663,32 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                                 placeholder={`Lựa chọn ${optLabel}`}
                                 className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
                               />
-                              <ImagePickerButton
-                                currentUrl={optImg}
-                                onSelectImage={(url) => {
-                                  const newOptImgs = [...(q.option_images || ['', '', '', ''])];
-                                  newOptImgs[optIdx] = url;
-                                  handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
-                                }}
-                                onRemoveImage={() => {
-                                  const newOptImgs = [...(q.option_images || [])];
-                                  newOptImgs[optIdx] = '';
-                                  handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
-                                }}
-                                labelTooltip={`Tải / chèn ảnh cho đáp án ${optLabel}`}
-                              />
+                              <label
+                                title={`Tải ảnh cho lựa chọn ${optLabel}`}
+                                className="bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold px-2.5 py-1.5 rounded-lg border border-sky-200 cursor-pointer shrink-0 flex items-center space-x-1 text-xs transition-all active:scale-95 shadow-2xs"
+                              >
+                                <Plus className="w-3.5 h-3.5 text-sky-600" />
+                                <ImageIcon className="w-3.5 h-3.5 text-sky-600" />
+                                <span>+ 🖼️ Ảnh</span>
+                                <input
+                                  type="file"
+                                  accept="image/jpg,image/jpeg,image/png,image/webp"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (uploadEvt) => {
+                                        const base64 = uploadEvt.target?.result as string;
+                                        const newOptImgs = [...(q.option_images || ['', '', '', ''])];
+                                        newOptImgs[optIdx] = base64;
+                                        handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
                             </div>
 
                             {/* Render option image preview if present */}
