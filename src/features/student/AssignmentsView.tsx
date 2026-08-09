@@ -392,13 +392,13 @@ export const AssignmentsView: React.FC = () => {
                         Câu {qIdx + 1}: {q.prompt}
                       </div>
 
-                      {/* RED TEXT FOR RIGHT/WRONG AS REQUESTED */}
+                      {/* GREEN TEXT FOR RIGHT, RED TEXT FOR WRONG */}
                       {isCorrect ? (
-                        <span className="text-red-600 font-extrabold text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
+                        <span className="text-emerald-600 font-extrabold text-sm bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
                           Đúng
                         </span>
                       ) : (
-                        <span className="text-red-600 font-extrabold text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
+                        <span className="text-rose-600 font-extrabold text-sm bg-rose-50 border border-rose-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
                           Sai
                         </span>
                       )}
