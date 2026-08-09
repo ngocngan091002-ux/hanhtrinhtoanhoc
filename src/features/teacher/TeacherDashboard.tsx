@@ -5,12 +5,11 @@ import { MaterialManager } from './MaterialManager';
 import { DailyTaskManager } from './DailyTaskManager';
 import { AssignmentManager } from './AssignmentManager';
 import { GradingCenter } from './GradingCenter';
-import { AIAnalyticsView } from './AIAnalyticsView';
 import { TeacherLeaderboard } from './TeacherLeaderboard';
-import { School, FolderPlus, CalendarCheck, BookOpenCheck, Award, BrainCircuit, Trophy } from 'lucide-react';
+import { School, FolderPlus, CalendarCheck, BookOpenCheck, Award, Trophy } from 'lucide-react';
 
 export const TeacherDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'classes' | 'materials' | 'daily_tasks' | 'assignments' | 'grading' | 'ai_analytics' | 'leaderboard'>('classes');
+  const [activeTab, setActiveTab] = useState<'classes' | 'materials' | 'daily_tasks' | 'assignments' | 'grading' | 'leaderboard'>('classes');
   const [selectedClass, setSelectedClass] = useState<MathClass | null>(null);
 
   return (
@@ -61,7 +60,7 @@ export const TeacherDashboard: React.FC = () => {
           }`}
         >
           <BookOpenCheck className="w-4 h-4" />
-          <span>3. Bài Tập & AI Đề Xuất</span>
+          <span>3. Bài Tập & Kiểm Tra</span>
         </button>
 
         <button
@@ -85,23 +84,13 @@ export const TeacherDashboard: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('ai_analytics')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all ${
-            activeTab === 'ai_analytics' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          <BrainCircuit className="w-4 h-4" />
-          <span>6. AI Phân Tích Học Sinh Yếu</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('leaderboard')}
           className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all ${
             activeTab === 'leaderboard' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Trophy className="w-4 h-4" />
-          <span>7. Bảng Xếp Hạng</span>
+          <span>6. Bảng Xếp Hạng</span>
         </button>
       </div>
 
@@ -113,7 +102,6 @@ export const TeacherDashboard: React.FC = () => {
       {activeTab === 'assignments' && <AssignmentManager currentClass={selectedClass} />}
       {activeTab === 'grading' && <GradingCenter currentClass={selectedClass} />}
       {activeTab === 'materials' && <MaterialManager currentClass={selectedClass} />}
-      {activeTab === 'ai_analytics' && <AIAnalyticsView currentClass={selectedClass} />}
       {activeTab === 'leaderboard' && <TeacherLeaderboard currentClass={selectedClass} />}
     </div>
   );

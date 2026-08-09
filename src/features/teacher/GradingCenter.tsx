@@ -418,15 +418,6 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                     Thời gian nộp: {new Date(selectedSubmission.submitted_at).toLocaleString('vi-VN')}
                   </div>
                 </div>
-
-                <button
-                  onClick={handleRequestAIGrading}
-                  disabled={isGradingAI}
-                  className="bg-gradient-to-r from-amber-500 to-sky-600 hover:from-amber-600 hover:to-sky-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all flex items-center space-x-1.5 shrink-0"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{isGradingAI ? 'AI Đang Phân Tích...' : '✨ AI Chấm Bài Tự Động'}</span>
-                </button>
               </div>
 
               {/* 🟢 PROMINENT TOP TEACHER GRADING BOX */}
@@ -477,22 +468,6 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                   <span>CHỐT KẾT QUẢ & GỬI ĐIỂM CHO HỌC SINH</span>
                 </button>
               </div>
-
-              {/* AI Suggestion Box */}
-              {selectedSubmission.ai_suggested_score !== undefined && (
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 space-y-2 text-xs">
-                  <div className="font-bold flex items-center space-x-1.5 text-amber-800">
-                    <Sparkles className="w-4 h-4 text-amber-600" />
-                    <span>Gợi Ý Chấm Bài Từ AI (Gemini):</span>
-                  </div>
-                  <div>
-                    <strong>Điểm đề xuất:</strong> <span className="font-extrabold text-sm text-amber-900">{selectedSubmission.ai_suggested_score}đ</span>
-                  </div>
-                  <div>
-                    <strong>Nhận xét đề xuất:</strong> {selectedSubmission.ai_suggested_feedback}
-                  </div>
-                </div>
-              )}
 
               {/* Student Answers View */}
               {(() => {

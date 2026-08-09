@@ -281,7 +281,7 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
             <span>Soạn Bài Tập & Bài Kiểm Tra Hằng Tuần</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Quy trình: Giáo viên soạn/dùng AI gợi ý $\rightarrow$ Xem trước $\rightarrow$ Giáo viên CHỐT xuất bản thì Học sinh mới nhận bài.
+            Quy trình: Giáo viên soạn bài tập $\rightarrow$ Xem trước $\rightarrow$ Giáo viên CHỐT xuất bản thì Học sinh mới nhận bài.
           </p>
         </div>
 
@@ -403,31 +403,6 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                   <option value="homework">Bài Tập Về Nhà</option>
                   <option value="weekly_test">Bài Kiểm Tra Hằng Tuần</option>
                 </select>
-              </div>
-            </div>
-
-            {/* AI Generator Banner */}
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-sky-50 border border-amber-200 space-y-3">
-              <div className="flex items-center space-x-2 text-amber-800 font-bold text-sm">
-                <Sparkles className="w-5 h-5 text-amber-600" />
-                <span>AI Hỗ Trợ Gợi Ý Câu Hỏi Tự Động (Gemini AI)</span>
-              </div>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={aiTopic}
-                  onChange={(e) => setAiTopic(e.target.value)}
-                  placeholder="Nhập chủ đề toán (vd: Phép chia Lớp 3, Hình vuông, Phân số...)"
-                  className="flex-1 px-4 py-2 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={handleGenerateAIQuestions}
-                  disabled={isGeneratingAI}
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-sm flex items-center space-x-1 shrink-0"
-                >
-                  {isGeneratingAI ? 'AI Đang Tạo...' : 'Gợi Ý Câu Hỏi'}
-                </button>
               </div>
             </div>
 

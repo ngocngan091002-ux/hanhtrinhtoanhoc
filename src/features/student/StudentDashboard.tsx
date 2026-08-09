@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { MathClass, Assignment, Material, StudentProgress } from '../../types';
+import { MathClass, Assignment, StudentProgress } from '../../types';
 import { DailyTasksView } from './DailyTasksView';
 import { AssignmentsView } from './AssignmentsView';
 import { GamesView } from './GamesView';
 import { MaterialsView } from './MaterialsView';
-import { MathAITutor } from './MathAITutor';
 import { ResultsProgressView } from './ResultsProgressView';
 import { StudentLeaderboard } from './StudentLeaderboard';
 import { StudentProfile } from './StudentProfile';
-import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Bot, Award, Trophy, User, PlusCircle, CheckCircle, Clock, Play } from 'lucide-react';
+import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Award, Trophy, User, PlusCircle, CheckCircle, Play } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    'home' | 'daily_tasks' | 'assignments' | 'games' | 'materials' | 'ai_tutor' | 'results' | 'leaderboard' | 'profile'
+    'home' | 'daily_tasks' | 'assignments' | 'games' | 'materials' | 'results' | 'leaderboard' | 'profile'
   >('home');
 
   // Student classes & assignments state
@@ -229,16 +228,6 @@ export const StudentDashboard: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('ai_tutor')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
-            activeTab === 'ai_tutor' ? 'bg-teal-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
-          }`}
-        >
-          <Bot className="w-4 h-4" />
-          <span>🤖 Trợ Lý Toán AI</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('results')}
           className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
             activeTab === 'results' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
@@ -363,7 +352,6 @@ export const StudentDashboard: React.FC = () => {
       {activeTab === 'assignments' && <AssignmentsView />}
       {activeTab === 'games' && <GamesView />}
       {activeTab === 'materials' && <MaterialsView />}
-      {activeTab === 'ai_tutor' && <MathAITutor />}
       {activeTab === 'results' && <ResultsProgressView />}
       {activeTab === 'leaderboard' && <StudentLeaderboard />}
       {activeTab === 'profile' && <StudentProfile />}
