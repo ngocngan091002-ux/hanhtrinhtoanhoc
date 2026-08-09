@@ -490,16 +490,44 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                     </div>
                   </div>
 
-                  {/* Question Prompt Input */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Nội dung đề câu hỏi:</label>
-                    <input
-                      type="text"
-                      value={q.prompt}
-                      onChange={(e) => handleUpdateQuestion(qIdx, { ...q, prompt: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-xs"
-                      placeholder="Nhập nội dung câu hỏi mới..."
-                    />
+                  {/* Question Prompt Input + Inline Image Button */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-extrabold text-slate-700 uppercase">
+                      Nội dung câu hỏi (Nhấn nút <span className="text-sky-600 font-black">➕ 🖼️</span> sát bên phải để tải/đổi ảnh câu hỏi):
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={q.prompt}
+                        onChange={(e) => handleUpdateQuestion(qIdx, { ...q, prompt: e.target.value })}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-xs"
+                        placeholder="Nhập nội dung câu hỏi mới..."
+                      />
+                      <label
+                        title="Tải / đính kèm ảnh cho câu hỏi này"
+                        className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs shadow-md cursor-pointer shrink-0 flex items-center space-x-1.5 transition-all active:scale-95"
+                      >
+                        <Plus className="w-4 h-4 text-white shrink-0" />
+                        <ImageIcon className="w-4 h-4 text-white shrink-0" />
+                        <span className="font-extrabold">➕ 🖼️</span>
+                        <input
+                          type="file"
+                          accept="image/jpg,image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (uploadEvt) => {
+                                const base64 = uploadEvt.target?.result as string;
+                                handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   {/* Question Image Preview */}
@@ -543,10 +571,10 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                     </div>
                   )}
 
-                  {/* Options with + Image Buttons */}
+                  {/* Options with Inline + Image Buttons */}
                   <div className="space-y-2 pt-2 border-t border-slate-200/60">
                     <label className="block text-xs font-bold text-slate-600 uppercase">
-                      Lựa chọn đáp án (Nhấn nút <span className="text-sky-600 font-black">➕ 🖼️ Ảnh</span> màu xanh để tải ảnh riêng cho từng đáp án A, B, C, D):
+                      Lựa chọn đáp án (Nhấn nút <span className="text-sky-600 font-black">➕ 🖼️</span> sát bên phải từng đáp án để đính kèm ảnh A, B, C, D):
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -556,41 +584,37 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
 
                         return (
                           <div key={optIdx} className="p-3 rounded-2xl border-2 border-slate-200 bg-white space-y-2.5 shadow-2xs">
-                            <div className="flex items-center justify-between gap-1.5">
-                              <div className="flex items-center space-x-2 flex-1">
-                                <input
-                                  type="radio"
-                                  name={`correct_${qIdx}`}
-                                  checked={q.correct_answer === opt}
-                                  onChange={() => handleUpdateQuestion(qIdx, { ...q, correct_answer: opt })}
-                                  className="w-4 h-4 text-sky-600 focus:ring-sky-500 shrink-0"
-                                />
-                                <span className="text-xs font-black text-slate-700 w-4">{optLabel}.</span>
-                                <input
-                                  type="text"
-                                  value={opt}
-                                  onChange={(e) => {
-                                    const newOpts = [...(q.options || [])];
-                                    newOpts[optIdx] = e.target.value;
-                                    handleUpdateQuestion(qIdx, {
-                                      ...q,
-                                      options: newOpts,
-                                      correct_answer: q.correct_answer === opt ? e.target.value : q.correct_answer,
-                                    });
-                                  }}
-                                  placeholder={`Lựa chọn ${optLabel}`}
-                                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                                />
-                              </div>
-
-                              {/* Prominent Option Image Button */}
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                name={`correct_${qIdx}`}
+                                checked={q.correct_answer === opt}
+                                onChange={() => handleUpdateQuestion(qIdx, { ...q, correct_answer: opt })}
+                                className="w-4 h-4 text-sky-600 focus:ring-sky-500 shrink-0"
+                              />
+                              <span className="text-xs font-black text-slate-700 w-4">{optLabel}.</span>
+                              <input
+                                type="text"
+                                value={opt}
+                                onChange={(e) => {
+                                  const newOpts = [...(q.options || [])];
+                                  newOpts[optIdx] = e.target.value;
+                                  handleUpdateQuestion(qIdx, {
+                                    ...q,
+                                    options: newOpts,
+                                    correct_answer: q.correct_answer === opt ? e.target.value : q.correct_answer,
+                                  });
+                                }}
+                                placeholder={`Lựa chọn ${optLabel}`}
+                                className="flex-1 px-2.5 py-2 rounded-lg border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                              />
                               <label
-                                title={`Tải ảnh cho đáp án ${optLabel}`}
-                                className="bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold px-2.5 py-1.5 rounded-xl border border-sky-300 cursor-pointer shrink-0 flex items-center space-x-1 text-xs shadow-2xs transition-all active:scale-95"
+                                title={`Tải ảnh cho lựa chọn ${optLabel}`}
+                                className="bg-sky-100 hover:bg-sky-200 text-sky-800 font-black px-2.5 py-2 rounded-lg border border-sky-300 cursor-pointer shrink-0 flex items-center space-x-1 text-xs shadow-2xs transition-all active:scale-95"
                               >
-                                <Plus className="w-3.5 h-3.5 text-sky-600" />
-                                <ImageIcon className="w-3.5 h-3.5 text-sky-600" />
-                                <span>➕ 🖼️ Ảnh {optLabel}</span>
+                                <Plus className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                                <ImageIcon className="w-3.5 h-3.5 text-sky-700 shrink-0" />
+                                <span className="font-extrabold">➕ 🖼️</span>
                                 <input
                                   type="file"
                                   accept="image/jpg,image/jpeg,image/png,image/webp"
