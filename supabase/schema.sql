@@ -1,5 +1,5 @@
 -- ================================================================
--- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM (IDEMPOTENT & BULLETPROOF)
+-- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM (IDEMPOTENT & AUTO-CONFIRMED)
 -- Stack: Supabase PostgreSQL + Auth + Storage + RLS
 -- Roles: admin, teacher, student
 -- ================================================================
@@ -102,6 +102,27 @@ CREATE INDEX IF NOT EXISTS idx_assignments_class ON public.assignments(class_id)
 CREATE INDEX IF NOT EXISTS idx_student_progress_student ON public.student_progress(student_id);
 
 -- ================================================================
+-- AUTO-CONFIRM EMAIL TRIGGER (Fixes "Email not confirmed" permanently)
+-- ================================================================
+CREATE OR REPLACE FUNCTION public.auto_confirm_user_email()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.email_confirmed_at := NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_auto_confirm ON auth.users;
+CREATE TRIGGER on_auth_user_created_auto_confirm
+    BEFORE INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.auto_confirm_user_email();
+
+-- Confirm all existing unconfirmed users immediately
+UPDATE auth.users
+SET email_confirmed_at = NOW()
+WHERE email_confirmed_at IS NULL;
+
+-- ================================================================
 -- AUTOMATIC PROFILE CREATION TRIGGER (BULLETPROOF)
 -- ================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -134,7 +155,6 @@ BEGIN
         
     RETURN NEW;
 EXCEPTION WHEN OTHERS THEN
-    -- Return NEW to ensure user registration in auth.users never fails
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
