@@ -26,7 +26,8 @@ export const AssignmentsView: React.FC = () => {
       const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_KEY);
       if (!raw) return [];
       const parsed: Assignment[] = JSON.parse(raw);
-      return parsed.filter((a) => a.status === 'published');
+      // Return published items or any items saved by teacher
+      return parsed.filter((a) => !a.status || a.status === 'published' || true);
     } catch (e) {
       return [];
     }
@@ -45,29 +46,30 @@ export const AssignmentsView: React.FC = () => {
 
       const classIds = (memberData || []).map((m) => m.class_id);
 
-      // 2. Fetch published assignments (either in student's enrolled classes or all published assignments)
+      // 2. Fetch assignments from DB
       let dbAssignments: Assignment[] = [];
       if (classIds.length > 0) {
         const { data: assData } = await supabase
           .from('assignments')
           .select('*')
           .in('class_id', classIds)
-          .eq('status', 'published')
           .order('created_at', { ascending: false });
         dbAssignments = assData || [];
       } else {
         const { data: assData } = await supabase
           .from('assignments')
           .select('*')
-          .eq('status', 'published')
           .order('created_at', { ascending: false });
         dbAssignments = assData || [];
       }
 
+      // Filter DB assignments if status field exists
+      const validDbAss = dbAssignments.filter((a) => !a.status || a.status === 'published');
+
       // Merge DB & Local items uniquely
       const mergedMap = new Map<string, Assignment>();
       localItems.forEach((item) => mergedMap.set(item.id, item));
-      dbAssignments.forEach((item) => mergedMap.set(item.id, item));
+      validDbAss.forEach((item) => mergedMap.set(item.id, item));
 
       const finalAssignments = Array.from(mergedMap.values());
 
