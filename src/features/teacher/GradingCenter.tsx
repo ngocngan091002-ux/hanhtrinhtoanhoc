@@ -170,6 +170,29 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     }
   };
 
+  const isAnswerCorrect = (q: Question, studentAns: any): boolean => {
+    if (studentAns === undefined || studentAns === null || studentAns === '') return false;
+    const sStr = String(studentAns).trim().toLowerCase();
+    const cStr = String(q.correct_answer || '').trim().toLowerCase();
+
+    if (sStr === cStr) return true;
+
+    if (q.options && Array.isArray(q.options)) {
+      const correctIdx = q.options.findIndex((opt) => String(opt).trim().toLowerCase() === cStr);
+      const studentIdx = q.options.findIndex((opt) => String(opt).trim().toLowerCase() === sStr);
+
+      if (correctIdx >= 0 && studentIdx >= 0 && correctIdx === studentIdx) return true;
+
+      const correctLabelIdx = ['a', 'b', 'c', 'd'].indexOf(cStr);
+      if (correctLabelIdx >= 0 && studentIdx === correctLabelIdx) return true;
+
+      const studentLabelIdx = ['a', 'b', 'c', 'd'].indexOf(sStr);
+      if (studentLabelIdx >= 0 && correctIdx === studentLabelIdx) return true;
+    }
+
+    return false;
+  };
+
   const calculateExactSubmissionScore = (sub: Submission) => {
     const currentAssignment = assignments.find((a) => a.id === selectedAssignmentId);
     let questions: Question[] = [];
@@ -202,37 +225,43 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     }
 
     if (!questions || questions.length === 0) {
-      return { score: 10, feedback: 'Em làm bài rất xuất sắc!' };
+      return { score: 10, feedback: 'Em làm bài rất xuất sắc!', accuracyPercent: 100, wrongQuestionsList: [], correctCount: 0, totalQuestions: 0 };
     }
 
     let correctCount = 0;
-    const wrongQuestions: string[] = [];
+    const wrongQuestionsList: { num: number; prompt: string }[] = [];
 
     questions.forEach((q, idx) => {
-      const studentAns = sub.answers_json?.[q.id] || sub.answers_json?.[`q_${idx}`] || (sub.answers_json ? Object.values(sub.answers_json)[idx] : undefined);
-      const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+      const studentAns = sub.answers_json?.[q.id] ?? sub.answers_json?.[`q_${idx}`] ?? sub.answers_json?.[idx] ?? (sub.answers_json ? Object.values(sub.answers_json)[idx] : undefined);
+      const isCorrect = isAnswerCorrect(q, studentAns);
 
       if (isCorrect) {
         correctCount++;
       } else {
-        wrongQuestions.push(`Câu ${idx + 1}`);
+        wrongQuestionsList.push({ num: idx + 1, prompt: q.prompt || `Câu ${idx + 1}` });
       }
     });
 
+    const accuracyPercent = Math.round((correctCount / questions.length) * 100);
     const calculatedScore = Math.round(((correctCount / questions.length) * 10) * 10) / 10;
     let calculatedFeedback = '';
 
     if (correctCount === questions.length) {
-      calculatedFeedback = `Em làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
+      calculatedFeedback = `Em làm bài xuất sắc! Đúng 100% tất cả ${questions.length}/${questions.length} câu hỏi.`;
     } else if (correctCount > 0) {
-      calculatedFeedback = `Em làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần chú ý ôn lại ${wrongQuestions.join(', ')} nhé!`;
+      const wrongStr = wrongQuestionsList.map((wq) => `Câu ${wq.num}`).join(', ');
+      calculatedFeedback = `Em đạt ${accuracyPercent}% (Làm đúng ${correctCount}/${questions.length} câu, đạt ${calculatedScore} điểm). Cần chú ý rèn luyện thêm ở ${wrongStr} nhé!`;
     } else {
-      calculatedFeedback = `Em cần nỗ lực luyện tập thêm nhé! Hãy xem lại đáp án gợi ý để làm tốt hơn ở bài sau.`;
+      calculatedFeedback = `Em làm đúng 0/${questions.length} câu (0%). Cần ôn lại kiến thức và rèn luyện chăm chỉ hơn nhé!`;
     }
 
     return {
       score: calculatedScore,
       feedback: calculatedFeedback,
+      accuracyPercent,
+      wrongQuestionsList,
+      correctCount,
+      totalQuestions: questions.length,
     };
   };
 
@@ -386,6 +415,61 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                   </div>
                 </div>
               </div>
+
+              {/* 📊 DYNAMIC STATS & ACCURACY CARD */}
+              {(() => {
+                const stats = calculateExactSubmissionScore(selectedSubmission);
+                return (
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-sky-50/90 border border-sky-200 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-white p-3 rounded-xl border border-sky-100 text-center shadow-2xs">
+                        <div className="text-xs font-bold text-slate-500 uppercase">Tỉ Lệ Làm Đúng</div>
+                        <div className="text-2xl font-black text-sky-600">{stats.accuracyPercent}%</div>
+                        <div className="text-[11px] text-slate-500 font-bold">
+                          ({stats.correctCount}/{stats.totalQuestions} câu đúng)
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl border border-sky-100 text-center shadow-2xs">
+                        <div className="text-xs font-bold text-slate-500 uppercase">Điểm Tự Động</div>
+                        <div className="text-2xl font-black text-emerald-600">{stats.score} / 10</div>
+                        <div className="text-[11px] text-slate-500 font-bold">(Tính chuẩn theo bài nộp)</div>
+                      </div>
+
+                      <div className="bg-white p-3 rounded-xl border border-sky-100 text-center shadow-2xs">
+                        <div className="text-xs font-bold text-slate-500 uppercase">Trạng Thái Bài Làm</div>
+                        <div className={`text-xl font-black ${stats.wrongQuestionsList.length > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                          {stats.wrongQuestionsList.length === 0 ? 'Đúng 100%' : `Sai ${stats.wrongQuestionsList.length} câu`}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-bold">
+                          {stats.wrongQuestionsList.length === 0 ? 'Xuất sắc' : 'Cần lưu ý rèn luyện'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {stats.wrongQuestionsList.length > 0 ? (
+                      <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 space-y-1.5">
+                        <div className="text-xs font-extrabold text-rose-800 uppercase flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4 text-rose-600" />
+                          <span>Nội dung học sinh làm sai / cần rèn luyện lại thực tế:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {stats.wrongQuestionsList.map((wq, wIdx) => (
+                            <span key={wIdx} className="bg-white text-rose-800 text-xs font-bold px-3 py-1 rounded-lg border border-rose-200 shadow-2xs">
+                              ⚠️ Câu {wq.num}: {wq.prompt}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-1.5">
+                        <CheckCircle className="w-4 h-4 text-emerald-600" />
+                        <span>Học sinh làm bài xuất sắc! Trả lời đúng 100% tất cả {stats.totalQuestions} câu hỏi trong bài.</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* 🟢 PROMINENT TOP TEACHER GRADING BOX */}
               <div className="p-5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300 space-y-4 shadow-sm">
