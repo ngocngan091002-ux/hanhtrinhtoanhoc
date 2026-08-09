@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { Assignment, Submission } from '../../types';
-import { BookOpenCheck, Clock, CheckCircle2, Send, HelpCircle } from 'lucide-react';
+import { Assignment, Submission, Question } from '../../types';
+import { BookOpenCheck, Clock, CheckCircle2, Send, HelpCircle, Eye, MessageSquare, Award, X } from 'lucide-react';
 
 const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
 const LOCAL_SUBMISSIONS_KEY = 'hanhtrinhtoanhoc_local_submissions';
@@ -17,6 +17,9 @@ export const AssignmentsView: React.FC = () => {
   const [activeAssignment, setActiveAssignment] = useState<Assignment | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Review mode state
+  const [reviewAssignment, setReviewAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     if (user) fetchAssignments();
@@ -295,19 +298,29 @@ export const AssignmentsView: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-2">
                   {userSub ? (
-                    <div className="w-full py-3 px-4 rounded-2xl font-extrabold text-xs bg-white text-slate-700 border border-slate-200 shadow-xs flex items-center justify-between pointer-events-none select-none">
-                      <div className="flex items-center space-x-2">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>✓ ĐÃ NỘP BÀI</span>
+                    <>
+                      <div className="w-full py-3 px-4 rounded-2xl font-extrabold text-xs bg-white text-slate-700 border border-slate-200 shadow-xs flex items-center justify-between select-none">
+                        <div className="flex items-center space-x-2">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>✓ ĐÃ NỘP BÀI</span>
+                        </div>
+                        {userSub.is_finalized ? (
+                          <span className="text-emerald-800 font-extrabold text-sm">Điểm: {userSub.final_score}đ</span>
+                        ) : (
+                          <span className="text-slate-400 font-medium text-[11px]">Chờ thầy cô chấm điểm</span>
+                        )}
                       </div>
-                      {userSub.is_finalized ? (
-                        <span className="text-emerald-800 font-extrabold text-sm">Điểm: {userSub.final_score}đ</span>
-                      ) : (
-                        <span className="text-slate-400 font-medium text-[11px]">Chờ thầy cô chấm điểm</span>
-                      )}
-                    </div>
+
+                      <button
+                        onClick={() => setReviewAssignment(ass)}
+                        className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-all flex items-center justify-center space-x-1.5"
+                      >
+                        <Eye className="w-4 h-4 text-sky-600" />
+                        <span>XEM LẠI BÀI LÀM & NHẬN XÉT</span>
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => handleStartQuiz(ass)}
@@ -320,6 +333,121 @@ export const AssignmentsView: React.FC = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewAssignment && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-3xl w-full shadow-2xl space-y-6 my-8 max-h-[90vh] overflow-y-auto relative">
+            <button
+              onClick={() => setReviewAssignment(null)}
+              className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="border-b border-slate-100 pb-4 space-y-2">
+              <span className="text-xs font-bold text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
+                {reviewAssignment.type === 'weekly_test' ? 'Bài Kiểm Tra Hằng Tuần' : 'Bài Tập Về Nhà'}
+              </span>
+              <h3 className="text-2xl font-extrabold text-slate-900 font-display">{reviewAssignment.title}</h3>
+
+              {/* Score & Teacher Feedback */}
+              {submissions[reviewAssignment.id] && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2 mt-3">
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-emerald-950 text-sm flex items-center gap-1.5">
+                      <Award className="w-5 h-5 text-amber-500" />
+                      <span>Kết Quả Đánh Giá Từ Giáo Viên</span>
+                    </span>
+                    <span className="text-xl font-black text-emerald-700 font-display">
+                      {submissions[reviewAssignment.id].final_score !== undefined
+                        ? `${submissions[reviewAssignment.id].final_score}đ`
+                        : 'Đã nộp bài'}
+                    </span>
+                  </div>
+
+                  {submissions[reviewAssignment.id].final_feedback && (
+                    <div className="text-xs text-emerald-900 pt-1 border-t border-emerald-200/60">
+                      <strong>Lời nhắn của Thầy Cô:</strong>{' '}
+                      <span className="italic font-medium">"{submissions[reviewAssignment.id].final_feedback}"</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Questions Detailed Review */}
+            <div className="space-y-6">
+              <h4 className="font-bold text-slate-800 text-sm uppercase tracking-wide">Chi Tiết Câu Hỏi & Đáp Án:</h4>
+              {reviewAssignment.questions_json?.map((q, qIdx) => {
+                const studentAns = submissions[reviewAssignment.id]?.answers_json?.[q.id];
+                const isCorrect = studentAns === q.correct_answer || (q.correct_answer && studentAns?.trim().toLowerCase() === q.correct_answer?.trim().toLowerCase());
+
+                return (
+                  <div key={q.id || qIdx} className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-4">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="font-bold text-slate-900 text-base">
+                        Câu {qIdx + 1}: {q.prompt}
+                      </div>
+
+                      {/* RED TEXT FOR RIGHT/WRONG AS REQUESTED */}
+                      {isCorrect ? (
+                        <span className="text-red-600 font-extrabold text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
+                          Đúng
+                        </span>
+                      ) : (
+                        <span className="text-red-600 font-extrabold text-sm bg-red-50 border border-red-200 px-3 py-1 rounded-xl shrink-0 shadow-xs">
+                          Sai
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {q.options?.map((opt, optIdx) => {
+                        const isStudentChoice = studentAns === opt;
+                        const isOptionCorrect = opt === q.correct_answer;
+
+                        let optClass = 'border-slate-200 bg-white text-slate-700';
+                        if (isStudentChoice && isOptionCorrect) {
+                          optClass = 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold';
+                        } else if (isStudentChoice && !isOptionCorrect) {
+                          optClass = 'border-rose-400 bg-rose-50 text-rose-950 font-bold';
+                        } else if (isOptionCorrect) {
+                          optClass = 'border-sky-400 bg-sky-50 text-sky-950 font-bold';
+                        }
+
+                        return (
+                          <div key={optIdx} className={`p-3.5 rounded-xl border text-left text-xs font-semibold ${optClass}`}>
+                            <div className="flex justify-between items-center">
+                              <span>{opt}</span>
+                              {isStudentChoice && <span className="text-[10px] uppercase font-bold underline">Lựa chọn của bạn</span>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {q.explanation && (
+                      <div className="p-3 rounded-xl bg-sky-50 text-sky-900 text-xs italic">
+                        <strong>Lời giải chi tiết:</strong> {q.explanation}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-4 flex justify-end border-t border-slate-100">
+              <button
+                onClick={() => setReviewAssignment(null)}
+                className="bg-slate-800 hover:bg-slate-900 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
