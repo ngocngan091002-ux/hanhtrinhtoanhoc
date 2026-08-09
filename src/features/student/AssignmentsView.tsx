@@ -8,7 +8,7 @@ const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
 const LOCAL_SUBMISSIONS_KEY = 'hanhtrinhtoanhoc_local_submissions';
 
 export const AssignmentsView: React.FC = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Record<string, Submission>>({});
   const [loading, setLoading] = useState(true);
@@ -149,10 +149,13 @@ export const AssignmentsView: React.FC = () => {
 
     setSubmitting(true);
 
+    const studentRealName = profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Học sinh Nguyễn Thị Ngọc Ngân';
+
     const localSub: Submission = {
       id: 'sub_' + Date.now(),
       assignment_id: activeAssignment.id,
       student_id: user.id,
+      student_name: studentRealName,
       answers_json: answers,
       submitted_at: new Date().toISOString(),
       is_finalized: false,

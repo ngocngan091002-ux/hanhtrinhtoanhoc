@@ -13,7 +13,7 @@ const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
 const LOCAL_SUBMISSIONS_KEY = 'hanhtrinhtoanhoc_local_submissions';
 
 export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string>('');
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -125,16 +125,20 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
       if (!error && data) {
         dbSubs = data.map((s: any) => ({
           ...s,
-          student_name: s.student?.full_name || s.student_name || 'Học sinh',
+          student_name: s.student?.full_name || s.student_name || profile?.full_name || 'Học sinh Nguyễn Thị Ngọc Ngân',
         }));
       }
 
       // Merge DB & Local submissions uniquely
       const mergedMap = new Map<string, Submission>();
       localSubs.forEach((item) => {
+        const realName = (item.student_name && item.student_name !== 'Học Sinh Nguyễn Văn Học') 
+          ? item.student_name 
+          : (profile?.full_name || user?.user_metadata?.full_name || 'Học sinh Nguyễn Thị Ngọc Ngân');
+
         mergedMap.set(item.id, {
           ...item,
-          student_name: item.student_name || 'Học Sinh Nguyễn Văn Học',
+          student_name: realName,
         });
       });
       dbSubs.forEach((item) => mergedMap.set(item.id, item));
@@ -148,10 +152,15 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
         setSelectedSubmission(null);
       }
     } catch (err) {
-      const formatted = localSubs.map((item) => ({
-        ...item,
-        student_name: item.student_name || 'Học Sinh Nguyễn Văn Học',
-      }));
+      const formatted = localSubs.map((item) => {
+        const realName = (item.student_name && item.student_name !== 'Học Sinh Nguyễn Văn Học') 
+          ? item.student_name 
+          : (profile?.full_name || user?.user_metadata?.full_name || 'Học sinh Nguyễn Thị Ngọc Ngân');
+        return {
+          ...item,
+          student_name: realName,
+        };
+      });
       setSubmissions(formatted);
       if (formatted.length > 0) handleSelectSubmission(formatted[0]);
       else setSelectedSubmission(null);
