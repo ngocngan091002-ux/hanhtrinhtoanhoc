@@ -10,9 +10,9 @@ function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: 
   // 1. Phép cộng phạm vi 20 (Grade 1 & 2)
   if (lowerTopic.includes('cộng') && (lowerTopic.includes('20') || lowerTopic.includes('lớp 1') || lowerTopic.includes('lớp 2'))) {
     const pool = [
-      { prompt: 'Phép tính 8 + 7 có kết quả bằng bao nhiêu?', options: ['15', '14', '16', '13'], correct: '15', exp: '8 + 7 = 15. Con tính nhẩm tách số rất tốt!' },
+      { prompt: 'Phép tính 8 + 7 có kết quả bằng bao nhiêu?', options: ['15', '14', '16', '13'], correct: '15', exp: '8 + 7 = 15. Em tính nhẩm tách số rất tốt!' },
       { prompt: 'Tính: 9 + 6 = ?', options: ['15', '14', '16', '17'], correct: '15', exp: '9 + 6 = 15. Tích cực phát huy nhé!' },
-      { prompt: 'Điền số thích hợp vào chỗ chấm: 12 + 5 = ...', options: ['17', '16', '18', '19'], correct: '17', exp: '12 + 5 = 17. Con làm bài rất xuất sắc!' },
+      { prompt: 'Điền số thích hợp vào chỗ chấm: 12 + 5 = ...', options: ['17', '16', '18', '19'], correct: '17', exp: '12 + 5 = 17. Em làm bài rất xuất sắc!' },
       { prompt: 'Tính nhẩm: 7 + 8 = ?', options: ['15', '16', '14', '13'], correct: '15', exp: '7 + 8 = 15. Phép tính hoán vị đúng 100%!' },
       { prompt: 'Tính: 11 + 6 = ?', options: ['17', '18', '16', '19'], correct: '17', exp: '11 + 6 = 17. Rất đáng khen ngợi!' },
     ];
@@ -28,9 +28,9 @@ function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: 
   // 2. Phép trừ phạm vi 20
   if (lowerTopic.includes('trừ') && (lowerTopic.includes('20') || lowerTopic.includes('lớp 1') || lowerTopic.includes('lớp 2'))) {
     const pool = [
-      { prompt: 'Phép tính 15 - 7 có kết quả bằng bao nhiêu?', options: ['8', '7', '9', '6'], correct: '8', exp: '15 - 7 = 8. Đúng rồi con nhé!' },
+      { prompt: 'Phép tính 15 - 7 có kết quả bằng bao nhiêu?', options: ['8', '7', '9', '6'], correct: '8', exp: '15 - 7 = 8. Đúng rồi em nhé!' },
       { prompt: 'Tính: 18 - 9 = ?', options: ['9', '8', '10', '7'], correct: '9', exp: '18 - 9 = 9. Phép trừ nhớ rất chuẩn!' },
-      { prompt: 'Điền số thích hợp: 14 - 6 = ...', options: ['8', '7', '9', '6'], correct: '8', exp: '14 - 6 = 8. Con làm bài rất giỏi!' },
+      { prompt: 'Điền số thích hợp: 14 - 6 = ...', options: ['8', '7', '9', '6'], correct: '8', exp: '14 - 6 = 8. Em làm bài rất giỏi!' },
       { prompt: 'Tính nhẩm: 13 - 5 = ?', options: ['8', '7', '9', '6'], correct: '8', exp: '13 - 5 = 8. Rất nhanh và chính xác!' },
       { prompt: 'Tính: 16 - 8 = ?', options: ['8', '7', '9', '6'], correct: '8', exp: '16 - 8 = 8. Tuyệt vời!' },
     ];
@@ -46,7 +46,7 @@ function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: 
   // 3. Phép nhân / Bảng nhân
   if (lowerTopic.includes('nhân') || lowerTopic.includes('bảng nhân')) {
     const pool = [
-      { prompt: 'Phép tính 5 x 7 có kết quả bằng bao nhiêu?', options: ['35', '30', '40', '25'], correct: '35', exp: '5 x 7 = 35. Con thuộc bảng nhân 5 rất chuẩn!' },
+      { prompt: 'Phép tính 5 x 7 có kết quả bằng bao nhiêu?', options: ['35', '30', '40', '25'], correct: '35', exp: '5 x 7 = 35. Em thuộc bảng nhân 5 rất chuẩn!' },
       { prompt: 'Tính: 4 x 8 = ?', options: ['32', '28', '36', '30'], correct: '32', exp: '4 x 8 = 32. Tính nhẩm chính xác!' },
       { prompt: 'Điền số thích hợp: 3 x 9 = ...', options: ['27', '24', '30', '21'], correct: '27', exp: '3 x 9 = 27. Xuất sắc!' },
       { prompt: 'Tính: 2 x 9 = ?', options: ['18', '16', '20', '14'], correct: '18', exp: '2 x 9 = 18. Rất tốt!' },
@@ -63,7 +63,7 @@ function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: 
 
   // 4. Default fallback matching grade level
   const genericPool = [
-    { prompt: `Phép tính 14 + 5 có kết quả bằng bao nhiêu?`, options: ['19', '18', '20', '17'], correct: '19', exp: '14 + 5 = 19. Con làm toán rất giỏi!' },
+    { prompt: `Phép tính 14 + 5 có kết quả bằng bao nhiêu?`, options: ['19', '18', '20', '17'], correct: '19', exp: '14 + 5 = 19. Em làm toán rất giỏi!' },
     { prompt: `Tính: 20 - 8 = ?`, options: ['12', '11', '13', '14'], correct: '12', exp: '20 - 8 = 12. Phép tính chuẩn xác!' },
     { prompt: `Số lớn nhất có một chữ số cộng với 5 bằng bao nhiêu?`, options: ['14', '13', '15', '12'], correct: '14', exp: 'Số lớn nhất có 1 chữ số là 9. Ta có 9 + 5 = 14. Rất thông minh!' },
     { prompt: `Điền số thích hợp vào chỗ chấm: 7 + ... = 15`, options: ['8', '7', '9', '6'], correct: '8', exp: '15 - 7 = 8. Tìm số hạng chưa biết rất giỏi!' },

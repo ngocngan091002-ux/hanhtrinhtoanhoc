@@ -165,7 +165,7 @@ export const StudentDashboard: React.FC = () => {
             Giao Diện Học Sinh
           </span>
           <h1 className="text-3xl font-extrabold font-display mt-2">
-            Chào mừng con, {profile?.full_name || 'Học sinh'}! 👋
+            Chào mừng em, {profile?.full_name || 'Học sinh'}! 👋
           </h1>
           <p className="text-sky-100 text-sm mt-1 max-w-xl">
             {enrolledClasses.length > 0

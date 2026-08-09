@@ -201,7 +201,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     }
 
     if (!questions || questions.length === 0) {
-      return { score: 10, feedback: 'Con làm bài rất xuất sắc!' };
+      return { score: 10, feedback: 'Em làm bài rất xuất sắc!' };
     }
 
     let correctCount = 0;
@@ -222,11 +222,11 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     let calculatedFeedback = '';
 
     if (correctCount === questions.length) {
-      calculatedFeedback = `Con làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
+      calculatedFeedback = `Em làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
     } else if (correctCount > 0) {
-      calculatedFeedback = `Con làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần chú ý ôn lại ${wrongQuestions.join(', ')} nhé!`;
+      calculatedFeedback = `Em làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần chú ý ôn lại ${wrongQuestions.join(', ')} nhé!`;
     } else {
-      calculatedFeedback = `Con cần nỗ lực luyện tập thêm nhé! Hãy xem lại đáp án gợi ý để làm tốt hơn ở bài sau.`;
+      calculatedFeedback = `Em cần nỗ lực luyện tập thêm nhé! Hãy xem lại đáp án gợi ý để làm tốt hơn ở bài sau.`;
     }
 
     return {
