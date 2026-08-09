@@ -159,14 +159,14 @@ export const ResultsProgressView: React.FC = () => {
               </div>
 
               {/* Show teacher feedback */}
-              {(sub.final_feedback || sub.ai_suggested_feedback) && (
+              {sub.is_finalized && sub.final_feedback && (
                 <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 text-slate-800 text-xs space-y-1">
                   <div className="font-extrabold text-sky-900 flex items-center space-x-1.5">
                     <MessageSquare className="w-4 h-4 text-sky-600" />
                     <span>Lời Nhận Xét Của Thầy Cô:</span>
                   </div>
                   <p className="text-slate-700 font-medium italic text-sm">
-                    "{sub.final_feedback || sub.ai_suggested_feedback || 'Con làm bài rất xuất sắc! Đã làm đúng toàn bộ câu hỏi.'}"
+                    "{sub.final_feedback}"
                   </p>
                 </div>
               )}
