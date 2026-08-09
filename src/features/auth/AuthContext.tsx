@@ -152,10 +152,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSelectedRole(role);
     const redirectTo = window.location.origin;
 
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo,
+        skipBrowserRedirect: true,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -165,6 +166,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     if (error) throw error;
+
+    if (data?.url) {
+      window.location.href = data.url;
+    }
   };
 
   const loginAsGuest = async (fullName: string, role: UserRole, customEmail?: string) => {

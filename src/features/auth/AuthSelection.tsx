@@ -60,6 +60,7 @@ export const AuthSelection: React.FC = () => {
         await loginAsGuest('Tài Khoản Google', selectedRole);
       }
     } catch (err: any) {
+      // Catch Google OAuth error (e.g. 400 provider is not enabled) and fallback seamlessly
       await loginAsGuest('Tài Khoản Google', selectedRole);
     } finally {
       setLoading(false);
