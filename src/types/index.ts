@@ -65,6 +65,7 @@ export interface Question {
   prompt: string;
   image_url?: string;
   options?: string[];
+  option_images?: string[];
   correct_answer: string;
   explanation?: string;
 }

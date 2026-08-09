@@ -594,6 +594,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                                   {q.options.map((opt: string, optIdx: number) => {
                                     const isStudentChoice = studentAns === opt;
                                     const isOptionCorrect = opt === q.correct_answer;
+                                    const optImg = (q as any).option_images?.[optIdx];
 
                                     let optClass = 'border-slate-200 bg-white text-slate-700';
                                     if (isStudentChoice && isOptionCorrect) {
@@ -605,7 +606,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                                     }
 
                                     return (
-                                      <div key={optIdx} className={`p-2.5 rounded-xl border text-left font-semibold ${optClass}`}>
+                                      <div key={optIdx} className={`p-2.5 rounded-xl border text-left font-semibold space-y-2 ${optClass}`}>
                                         <div className="flex justify-between items-center">
                                           <span>{opt}</span>
                                           {isStudentChoice && (
@@ -614,6 +615,13 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                                             </span>
                                           )}
                                         </div>
+                                        {optImg && (
+                                           <img
+                                             src={optImg}
+                                             alt={`Ảnh đáp án ${opt}`}
+                                             className="max-h-32 rounded-lg object-contain bg-white p-1 border border-slate-200 shadow-xs mx-auto"
+                                           />
+                                        )}
                                       </div>
                                     );
                                   })}

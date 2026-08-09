@@ -257,18 +257,27 @@ export const AssignmentsView: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 {q.options?.map((opt, optIdx) => {
                   const isSelected = answers[q.id] === opt;
+                  const optImg = q.option_images?.[optIdx];
+
                   return (
                     <button
                       key={optIdx}
                       type="button"
                       onClick={() => handleSelectOption(q.id || `q_${qIdx}`, opt, qIdx)}
-                      className={`p-3.5 rounded-xl border text-left font-bold text-sm transition-all ${
+                      className={`p-3.5 rounded-xl border text-left font-bold text-sm transition-all flex flex-col items-center gap-2 ${
                         isSelected
                           ? 'border-sky-600 bg-sky-500 text-white shadow-md'
                           : 'border-slate-200 bg-white hover:border-sky-300 text-slate-800'
                       }`}
                     >
-                      {opt}
+                      <span className="w-full text-left">{opt}</span>
+                      {optImg && (
+                        <img
+                          src={optImg}
+                          alt={`Ảnh đáp án ${opt}`}
+                          className="max-h-36 rounded-lg object-contain bg-white p-1 border border-slate-200 shadow-xs"
+                        />
+                      )}
                     </button>
                   );
                 })}
@@ -499,6 +508,7 @@ export const AssignmentsView: React.FC = () => {
                       {q.options?.map((opt, optIdx) => {
                         const isStudentChoice = studentAns === opt;
                         const isOptionCorrect = opt === q.correct_answer;
+                        const optImg = q.option_images?.[optIdx];
 
                         let optClass = 'border-slate-200 bg-white text-slate-700';
                         if (isStudentChoice && isOptionCorrect) {
@@ -510,11 +520,18 @@ export const AssignmentsView: React.FC = () => {
                         }
 
                         return (
-                          <div key={optIdx} className={`p-3.5 rounded-xl border text-left text-xs font-semibold ${optClass}`}>
+                          <div key={optIdx} className={`p-3.5 rounded-xl border text-left text-xs font-semibold space-y-2 ${optClass}`}>
                             <div className="flex justify-between items-center">
                               <span>{opt}</span>
                               {isStudentChoice && <span className="text-[10px] uppercase font-bold underline">Lựa chọn của bạn</span>}
                             </div>
+                            {optImg && (
+                              <img
+                                src={optImg}
+                                alt={`Ảnh đáp án ${opt}`}
+                                className="max-h-32 rounded-lg object-contain bg-white p-1 border border-slate-200 shadow-xs mx-auto"
+                              />
+                            )}
                           </div>
                         );
                       })}
