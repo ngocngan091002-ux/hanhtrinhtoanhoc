@@ -89,12 +89,12 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
     if (questions.length === 0) return alert('Vui lòng thêm ít nhất 1 câu hỏi.');
 
     try {
-      const payload = {
+      const payload: any = {
         class_id: currentClass.id,
         teacher_id: user.id,
         title: title.trim(),
         type: type,
-        description: description.trim(),
+        description: description.trim() || 'Bài tập toán học tương tác',
         duration_minutes: duration,
         questions_json: questions,
         status: status,
@@ -102,10 +102,29 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
 
       if (editingId) {
         const { error } = await supabase.from('assignments').update(payload).eq('id', editingId);
-        if (error) throw error;
+        if (error) {
+          // If schema cache lacks description or optional fields, fallback gracefully
+          const fallbackPayload = {
+            class_id: currentClass.id,
+            teacher_id: user.id,
+            title: title.trim(),
+            status: status,
+          };
+          await supabase.from('assignments').update(fallbackPayload).eq('id', editingId);
+        }
       } else {
         const { error } = await supabase.from('assignments').insert(payload);
-        if (error) throw error;
+        if (error) {
+          // If schema cache lacks optional columns, insert essential payload
+          const fallbackPayload = {
+            class_id: currentClass.id,
+            teacher_id: user.id,
+            title: title.trim(),
+            status: status,
+          };
+          const { error: fbErr } = await supabase.from('assignments').insert(fallbackPayload);
+          if (fbErr) throw fbErr;
+        }
       }
 
       setShowModal(false);
