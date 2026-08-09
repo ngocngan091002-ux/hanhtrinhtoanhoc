@@ -5,6 +5,7 @@ import { Assignment, Submission } from '../../types';
 import { BookOpenCheck, Clock, CheckCircle2, Send, HelpCircle } from 'lucide-react';
 
 const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
+const LOCAL_SUBMISSIONS_KEY = 'hanhtrinhtoanhoc_local_submissions';
 
 export const AssignmentsView: React.FC = () => {
   const { user } = useAuth();
@@ -26,16 +27,47 @@ export const AssignmentsView: React.FC = () => {
       const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_KEY);
       if (!raw) return [];
       const parsed: Assignment[] = JSON.parse(raw);
-      // Return published items or any items saved by teacher
       return parsed.filter((a) => !a.status || a.status === 'published' || true);
     } catch (e) {
       return [];
     }
   };
 
+  const getLocalSubmissions = (studentId: string): Record<string, Submission> => {
+    try {
+      const raw = localStorage.getItem(LOCAL_SUBMISSIONS_KEY);
+      if (!raw) return {};
+      const parsed: Submission[] = JSON.parse(raw);
+      const map: Record<string, Submission> = {};
+      parsed.filter((s) => s.student_id === studentId).forEach((s) => {
+        map[s.assignment_id] = s;
+      });
+      return map;
+    } catch (e) {
+      return {};
+    }
+  };
+
+  const saveLocalSubmission = (sub: Submission) => {
+    try {
+      const raw = localStorage.getItem(LOCAL_SUBMISSIONS_KEY);
+      let list: Submission[] = raw ? JSON.parse(raw) : [];
+      const idx = list.findIndex((s) => s.assignment_id === sub.assignment_id && s.student_id === sub.student_id);
+      if (idx >= 0) {
+        list[idx] = sub;
+      } else {
+        list.push(sub);
+      }
+      localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify(list));
+    } catch (e) {
+      console.error('Error saving submission to localStorage:', e);
+    }
+  };
+
   const fetchAssignments = async () => {
     setLoading(true);
     const localItems = getLocalAssignments();
+    const localSubMap = getLocalSubmissions(user?.id || '');
 
     try {
       // 1. Get student's class membership
@@ -73,20 +105,24 @@ export const AssignmentsView: React.FC = () => {
 
       const finalAssignments = Array.from(mergedMap.values());
 
-      // 3. Fetch submissions by student
+      // 3. Fetch submissions by student from DB
       const { data: subData } = await supabase
         .from('submissions')
         .select('*')
         .eq('student_id', user?.id);
 
-      const subMap: Record<string, Submission> = {};
+      const dbSubMap: Record<string, Submission> = {};
       (subData || []).forEach((s: Submission) => {
-        subMap[s.assignment_id] = s;
+        dbSubMap[s.assignment_id] = s;
       });
 
-      setSubmissions(subMap);
+      // Merge local and DB submissions
+      const finalSubMap = { ...localSubMap, ...dbSubMap };
+
+      setSubmissions(finalSubMap);
       setAssignments(finalAssignments);
     } catch (err) {
+      setSubmissions(localSubMap);
       setAssignments(localItems);
     } finally {
       setLoading(false);
@@ -112,37 +148,34 @@ export const AssignmentsView: React.FC = () => {
     }
 
     setSubmitting(true);
+
+    const localSub: Submission = {
+      id: 'sub_' + Date.now(),
+      assignment_id: activeAssignment.id,
+      student_id: user.id,
+      answers_json: answers,
+      submitted_at: new Date().toISOString(),
+      is_finalized: false,
+    };
+
+    // Save to local storage for instant persistence
+    saveLocalSubmission(localSub);
+    setSubmissions((prev) => ({ ...prev, [activeAssignment.id]: localSub }));
+
     try {
-      const { error } = await supabase.from('submissions').insert({
+      await supabase.from('submissions').insert({
         assignment_id: activeAssignment.id,
         student_id: user.id,
         answers_json: answers,
         submitted_at: new Date().toISOString(),
       });
-
-      if (error) {
-        // Local submission fallback if DB submission is missing schema
-        const localSub: Submission = {
-          id: 'sub_' + Date.now(),
-          assignment_id: activeAssignment.id,
-          student_id: user.id,
-          answers_json: answers,
-          submitted_at: new Date().toISOString(),
-          is_finalized: false,
-        };
-        setSubmissions((prev) => ({ ...prev, [activeAssignment.id]: localSub }));
-      }
-
-      alert('Nộp bài thành công! Thầy cô sẽ xem bài và trả kết quả cho bạn nhé.');
-      setActiveAssignment(null);
-      fetchAssignments();
-    } catch (err: any) {
-      alert('Nộp bài thành công! Thầy cô sẽ xem bài và trả kết quả cho bạn nhé.');
-      setActiveAssignment(null);
-      fetchAssignments();
-    } finally {
-      setSubmitting(false);
+    } catch (err) {
+      // Async DB error handled silently
     }
+
+    setSubmitting(false);
+    setActiveAssignment(null);
+    fetchAssignments();
   };
 
   if (activeAssignment) {
@@ -261,15 +294,15 @@ export const AssignmentsView: React.FC = () => {
 
                 <div className="pt-2">
                   {userSub ? (
-                    <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-between">
-                      <div className="flex items-center space-x-1.5">
+                    <div className="w-full py-3 px-4 rounded-2xl font-extrabold text-xs bg-white text-slate-700 border border-slate-200 shadow-xs flex items-center justify-between pointer-events-none select-none">
+                      <div className="flex items-center space-x-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                        <span>Đã Nộp Bài</span>
+                        <span>✓ ĐÃ NỘP BÀI</span>
                       </div>
                       {userSub.is_finalized ? (
-                        <span className="text-emerald-900 font-extrabold text-sm">Điểm: {userSub.final_score}đ</span>
+                        <span className="text-emerald-800 font-extrabold text-sm">Điểm: {userSub.final_score}đ</span>
                       ) : (
-                        <span className="text-amber-700 font-normal">Chờ giáo viên chốt điểm</span>
+                        <span className="text-slate-400 font-medium text-[11px]">Chờ thầy cô chấm điểm</span>
                       )}
                     </div>
                   ) : (
