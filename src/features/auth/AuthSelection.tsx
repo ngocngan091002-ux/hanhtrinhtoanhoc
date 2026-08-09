@@ -30,12 +30,24 @@ export const AuthSelection: React.FC = () => {
         await signInWithEmail(email, password);
       } else {
         await signUpWithEmail(email, password, fullName, selectedRole);
-        setSuccessMessage('Đăng ký tài khoản thành công! Bạn đang tự động đăng nhập...');
-        // Auto login after signup
-        await signInWithEmail(email, password);
+        setSuccessMessage('Tài khoản đã đăng ký thành công! Đang tự động chuyển hướng...');
+        try {
+          await signInWithEmail(email, password);
+        } catch (loginErr: any) {
+          // If login after signup fails (e.g. email confirmation required), inform user clearly
+          if (loginErr?.message?.includes('Invalid login credentials') || loginErr?.message?.includes('Email not confirmed')) {
+            setErrorMessage('Tài khoản đã đăng ký nhưng Supabase đang bật tính năng bắt buộc Xác nhận Email (Confirm Email). Vui lòng mở hộp thư email để xác nhận HOẶC dùng nút "Vào Trải Nghiệm Nhanh 1-Click" bên dưới.');
+          } else {
+            throw loginErr;
+          }
+        }
       }
     } catch (err: any) {
-      setErrorMessage(err?.message || 'Có lỗi xảy ra khi xác thực tài khoản.');
+      if (err?.message?.includes('Invalid login credentials')) {
+        setErrorMessage('Tài khoản hoặc Mật khẩu chưa chính xác (hoặc tài khoản cần Xác nhận Email trên Supabase).');
+      } else {
+        setErrorMessage(err?.message || 'Có lỗi xảy ra khi xác thực tài khoản.');
+      }
     } finally {
       setLoading(false);
     }
@@ -91,7 +103,6 @@ export const AuthSelection: React.FC = () => {
       setErrorMessage(null);
       await signInWithGoogle(selectedRole);
     } catch (err: any) {
-      // Catch Google provider not enabled error and show self-fixing helper modal
       if (err?.message?.includes('provider is not enabled') || err?.status === 400) {
         setShowGoogleHelpModal(true);
       } else {
@@ -124,20 +135,20 @@ export const AuthSelection: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl relative z-10 space-y-6">
         {/* 🚀 1-CLICK INSTANT ACCESS HERO BANNER */}
-        <div className="bg-gradient-to-r from-sky-600 to-indigo-700 p-6 rounded-3xl text-white shadow-xl space-y-4">
+        <div className="bg-gradient-to-r from-sky-600 to-indigo-700 p-6 rounded-3xl text-white shadow-xl space-y-4 border border-sky-400/30">
           <div className="flex items-center space-x-2">
             <Zap className="w-6 h-6 text-amber-300 animate-bounce" />
-            <h2 className="text-lg font-extrabold font-display">Vào Trải Nghiệm Nhanh 1-Click (Không Cần Mật Khẩu)</h2>
+            <h2 className="text-lg font-extrabold font-display">Vào Trải Nghiệm Nhanh 1-Click (Vào Thẳng Hệ Thống)</h2>
           </div>
           <p className="text-xs text-sky-100">
-            Tự động khởi tạo và truy cập thẳng giao diện hệ thống cho từng vai trò ngay lập tức:
+            Bấm 1 nút bên dưới để vào thẳng giao diện hệ thống tức thì không cần xác nhận Email:
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
             <button
               onClick={() => handleQuickDemoLogin('student')}
               disabled={loading}
-              className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold px-3 py-2.5 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
+              className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
             >
               <GraduationCap className="w-4 h-4" />
               <span>Vào Vai Học Sinh</span>
@@ -146,7 +157,7 @@ export const AuthSelection: React.FC = () => {
             <button
               onClick={() => handleQuickDemoLogin('teacher')}
               disabled={loading}
-              className="bg-white hover:bg-slate-100 text-sky-900 font-extrabold px-3 py-2.5 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
+              className="bg-white hover:bg-slate-100 text-sky-900 font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
             >
               <School className="w-4 h-4 text-sky-600" />
               <span>Vào Vai Giáo Viên</span>
@@ -155,7 +166,7 @@ export const AuthSelection: React.FC = () => {
             <button
               onClick={() => handleQuickDemoLogin('admin')}
               disabled={loading}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-3 py-2.5 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5 border border-slate-700"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5 border border-slate-700"
             >
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Vào Vai Admin</span>
@@ -238,9 +249,9 @@ export const AuthSelection: React.FC = () => {
               <p>{errorMessage}</p>
               <button
                 onClick={() => handleQuickDemoLogin(selectedRole)}
-                className="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-rose-700 transition-all"
+                className="bg-rose-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs hover:bg-rose-700 transition-all block w-full text-center"
               >
-                ⚡ Bấm vào đây để vào hệ thống ngay (Bỏ qua lỗi)
+                ⚡ Bấm vào đây để vào hệ thống ngay (Vượt qua yêu cầu Email)
               </button>
             </div>
           )}
@@ -339,16 +350,16 @@ export const AuthSelection: React.FC = () => {
             <div className="flex items-center space-x-3 text-amber-600">
               <AlertTriangle className="w-8 h-8 flex-shrink-0" />
               <h3 className="text-lg font-extrabold font-display text-slate-900">
-                Supabase Chưa Bật Đăng Nhập Google
+                Chưa Cấu Hình Bật Đăng Nhập Google Trên Supabase
               </h3>
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed">
-              Google OAuth yêu cầu cấu hình Google Client ID riêng từ Google Cloud Console. Để Thầy/Cô không cần mất thời gian thao tác phức tạp, hệ thống đã chuẩn bị sẵn nút **Vào Hệ Thống Ngay (1-Click)** bên dưới:
+              Tính năng Đăng nhập bằng Google yêu cầu cấu hình Google OAuth Client ID từ Google Cloud Console. Để Thầy/Cô không bị vướng mắc, hãy bấm vào 1 trong các nút bên dưới để vào hệ thống ngay lập tức:
             </p>
 
             <div className="p-4 bg-sky-50 rounded-2xl border border-sky-100 space-y-3">
-              <span className="text-xs font-bold text-sky-900 uppercase">⚡ Chọn vai trò để vào luôn:</span>
+              <span className="text-xs font-bold text-sky-900 uppercase">⚡ Chọn vai trò để vào thẳng hệ thống:</span>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => handleQuickDemoLogin('student')}
