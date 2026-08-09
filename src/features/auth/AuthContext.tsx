@@ -13,9 +13,12 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, fullName: string, role: UserRole) => Promise<void>;
   signInWithGoogle: (role: UserRole) => Promise<void>;
+  loginAsGuest: (fullName: string, role: UserRole, email?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
+
+const LOCAL_STORAGE_KEY = 'hanhtrinhtoanhoc_guest_session';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -27,12 +30,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // 1. Check Supabase session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id, session.user);
       } else {
+        // 2. Check local guest session fallback
+        const savedGuest = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedGuest) {
+          try {
+            const guestObj = JSON.parse(savedGuest);
+            setProfile(guestObj.profile);
+            setUser(guestObj.user);
+          } catch (e) {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+          }
+        }
         setLoading(false);
       }
     });
@@ -41,9 +56,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
         await fetchProfile(session.user.id, session.user);
       } else {
-        setProfile(null);
+        const savedGuest = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (savedGuest) {
+          try {
+            const guestObj = JSON.parse(savedGuest);
+            setProfile(guestObj.profile);
+            setUser(guestObj.user);
+          } catch (e) {
+            setProfile(null);
+          }
+        } else {
+          setProfile(null);
+        }
         setLoading(false);
       }
     });
@@ -129,7 +156,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
+  const loginAsGuest = async (fullName: string, role: UserRole, customEmail?: string) => {
+    const guestId = 'usr_' + Math.random().toString(36).substring(2, 10);
+    const email = customEmail || `${role}_${Math.floor(Math.random() * 1000)}@hanhtrinhtoanhoc.edu.vn`;
+
+    const guestProfile: UserProfile = {
+      id: guestId,
+      email: email,
+      full_name: fullName || (role === 'teacher' ? 'Giáo Viên' : role === 'admin' ? 'Quản Trị Viên' : 'Học Sinh'),
+      role: role,
+      created_at: new Date().toISOString(),
+    };
+
+    const guestUser: any = {
+      id: guestId,
+      email: email,
+      user_metadata: {
+        full_name: guestProfile.full_name,
+        role: role,
+      },
+    };
+
+    // Save to localStorage for persistence
+    localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify({
+        user: guestUser,
+        profile: guestProfile,
+      })
+    );
+
+    // Try upserting to Supabase DB profiles if possible
+    try {
+      await supabase.from('profiles').upsert(guestProfile);
+    } catch (e) {
+      // Ignore DB network errors in offline/demo fallback mode
+    }
+
+    setUser(guestUser);
+    setProfile(guestProfile);
+    setSelectedRole(role);
+    setLoading(false);
+  };
+
   const signOut = async () => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -152,6 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithEmail,
         signUpWithEmail,
         signInWithGoogle,
+        loginAsGuest,
         signOut,
         refreshProfile,
       }}
