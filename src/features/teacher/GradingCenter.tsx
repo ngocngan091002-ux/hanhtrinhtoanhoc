@@ -423,17 +423,106 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
               )}
 
               {/* Student Answers View */}
-              <div className="space-y-3 pt-2 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-800">Chi Tiết Bài Làm Của Học Sinh:</h4>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
-                  {Object.entries(selectedSubmission.answers_json || {}).map(([qId, ans], idx) => (
-                    <div key={qId} className="flex justify-between items-center py-2 border-b border-slate-200/60 last:border-0">
-                      <span className="font-bold text-slate-700">Câu {idx + 1}:</span>
-                      <span className="font-mono text-sky-800 bg-white px-3 py-1 rounded-lg border border-slate-200 font-extrabold text-sm">{ans}</span>
+              {(() => {
+                const currentAssignment = assignments.find((a) => a.id === selectedAssignmentId);
+                const questions = currentAssignment?.questions_json || [];
+
+                if (questions.length > 0) {
+                  return (
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                      <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Chi Tiết Bài Làm Của Học Sinh:</h4>
+                      <div className="space-y-3">
+                        {questions.map((q, idx) => {
+                          const studentAns = selectedSubmission.answers_json?.[q.id] || selectedSubmission.answers_json?.[`q_${idx}`] || (selectedSubmission.answers_json ? Object.values(selectedSubmission.answers_json)[idx] : undefined);
+                          const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+
+                          return (
+                            <div key={q.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
+                              <div className="flex justify-between items-start gap-2">
+                                <div className="font-extrabold text-slate-900 text-sm">
+                                  Câu {idx + 1}: {q.prompt}
+                                </div>
+
+                                {isCorrect ? (
+                                  <span className="text-emerald-600 font-extrabold text-xs bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-lg shrink-0">
+                                    ✓ Đúng
+                                  </span>
+                                ) : (
+                                  <span className="text-rose-600 font-extrabold text-xs bg-rose-50 border border-rose-200 px-2.5 py-0.5 rounded-lg shrink-0">
+                                    ✕ Sai
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Options Grid */}
+                              {q.options && q.options.length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                  {q.options.map((opt, optIdx) => {
+                                    const isStudentChoice = studentAns === opt;
+                                    const isOptionCorrect = opt === q.correct_answer;
+
+                                    let optClass = 'border-slate-200 bg-white text-slate-700';
+                                    if (isStudentChoice && isOptionCorrect) {
+                                      optClass = 'border-emerald-500 bg-emerald-100/70 text-emerald-950 font-bold';
+                                    } else if (isStudentChoice && !isOptionCorrect) {
+                                      optClass = 'border-rose-400 bg-rose-100/70 text-rose-950 font-bold';
+                                    } else if (isOptionCorrect) {
+                                      optClass = 'border-sky-400 bg-sky-50 text-sky-950 font-bold';
+                                    }
+
+                                    return (
+                                      <div key={optIdx} className={`p-2.5 rounded-xl border text-left font-semibold ${optClass}`}>
+                                        <div className="flex justify-between items-center">
+                                          <span>{opt}</span>
+                                          {isStudentChoice && (
+                                            <span className="text-[10px] uppercase font-extrabold text-sky-800 bg-sky-100 px-1.5 py-0.5 rounded">
+                                              Học sinh chọn
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+
+                              {/* Summary line */}
+                              <div className="flex flex-wrap items-center gap-3 text-xs pt-1 border-t border-slate-200/60 text-slate-600">
+                                <div>
+                                  <strong>Đáp án học sinh đã chọn:</strong>{' '}
+                                  <span className="font-extrabold text-sky-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {studentAns || 'Chưa trả lời'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <strong>Đáp án đúng:</strong>{' '}
+                                  <span className="font-extrabold text-emerald-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    {q.correct_answer}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  ))}
-                </div>
-              </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3 pt-2 border-t border-slate-100">
+                    <h4 className="text-sm font-bold text-slate-800">Chi Tiết Bài Làm Của Học Sinh:</h4>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                      {Object.entries(selectedSubmission.answers_json || {}).map(([qId, ans], idx) => (
+                        <div key={qId} className="flex justify-between items-center py-2 border-b border-slate-200/60 last:border-0">
+                          <span className="font-bold text-slate-700">Câu {idx + 1}:</span>
+                          <span className="font-mono text-sky-800 bg-white px-3 py-1 rounded-lg border border-slate-200 font-extrabold text-sm">{ans}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </>
           ) : (
             <div className="py-16 text-center text-slate-400 text-sm">
