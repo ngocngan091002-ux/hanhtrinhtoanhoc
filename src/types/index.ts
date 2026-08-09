@@ -63,6 +63,7 @@ export interface LearningMaterial {
 export interface Question {
   id: string;
   prompt: string;
+  image_url?: string;
   options?: string[];
   correct_answer: string;
   explanation?: string;
@@ -97,6 +98,7 @@ export interface Submission {
   ai_suggested_feedback?: string;
   final_score?: number;
   final_feedback?: string;
+  final_feedback_image?: string;
   is_finalized: boolean;
   finalized_at?: string;
   finalized_by?: string;

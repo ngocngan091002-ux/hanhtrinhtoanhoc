@@ -3,7 +3,7 @@ import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { Assignment, MathClass, Question } from '../../types';
 import { generateAIQuestions } from '../../config/gemini';
-import { BookOpenCheck, Plus, Sparkles, Eye, Send, Edit, Trash2, HelpCircle } from 'lucide-react';
+import { BookOpenCheck, Plus, Sparkles, Eye, Send, Edit, Trash2, HelpCircle, Image as ImageIcon, Upload, X } from 'lucide-react';
 
 interface AssignmentManagerProps {
   currentClass?: MathClass | null;
@@ -443,6 +443,65 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold bg-white"
                     placeholder="Nội dung câu hỏi..."
                   />
+
+                  {/* Question Image Upload / URL */}
+                  <div className="space-y-2 pt-1">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5 text-sky-600" />
+                        <span>Ảnh minh họa câu hỏi:</span>
+                      </label>
+                      {q.image_url && (
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateQuestion(qIdx, { ...q, image_url: '' })}
+                          className="text-[11px] font-bold text-rose-600 hover:underline flex items-center gap-0.5"
+                        >
+                          <X className="w-3 h-3" /> Xóa ảnh
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={q.image_url || ''}
+                        onChange={(e) => handleUpdateQuestion(qIdx, { ...q, image_url: e.target.value })}
+                        placeholder="Dán liên kết URL ảnh (https://...)..."
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white"
+                      />
+                      <label className="bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold px-3 py-1.5 rounded-xl text-xs border border-sky-200 cursor-pointer shrink-0 flex items-center space-x-1">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Tải ảnh từ máy</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (uploadEvt) => {
+                                const base64 = uploadEvt.target?.result as string;
+                                handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {q.image_url && (
+                      <div className="mt-2 p-2 bg-slate-100 rounded-xl border border-slate-200 text-center">
+                        <img
+                          src={q.image_url}
+                          alt={`Minh họa câu ${qIdx + 1}`}
+                          className="max-h-40 rounded-lg mx-auto object-contain shadow-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   {/* Options */}
                   <div className="grid grid-cols-2 gap-2">

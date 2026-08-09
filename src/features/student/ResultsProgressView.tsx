@@ -159,15 +159,26 @@ export const ResultsProgressView: React.FC = () => {
               </div>
 
               {/* Show teacher feedback */}
-              {sub.is_finalized && sub.final_feedback && (
-                <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 text-slate-800 text-xs space-y-1">
+              {sub.is_finalized && (sub.final_feedback || sub.final_feedback_image) && (
+                <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 text-slate-800 text-xs space-y-2">
                   <div className="font-extrabold text-sky-900 flex items-center space-x-1.5">
                     <MessageSquare className="w-4 h-4 text-sky-600" />
-                    <span>Lời Nhận Xét Của Thầy Cô:</span>
+                    <span>Lời Nhận Xét & Ảnh Bài Giải Của Thầy Cô:</span>
                   </div>
-                  <p className="text-slate-700 font-medium italic text-sm">
-                    "{sub.final_feedback}"
-                  </p>
+                  {sub.final_feedback && (
+                    <p className="text-slate-700 font-medium italic text-sm">
+                      "{sub.final_feedback}"
+                    </p>
+                  )}
+                  {sub.final_feedback_image && (
+                    <div className="pt-2 text-center">
+                      <img
+                        src={sub.final_feedback_image}
+                        alt="Ảnh bài giải / nhận xét từ Thầy Cô"
+                        className="max-h-60 rounded-2xl border border-sky-200 object-contain mx-auto bg-white shadow-xs"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

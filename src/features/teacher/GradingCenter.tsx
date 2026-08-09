@@ -3,7 +3,7 @@ import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { Submission, MathClass, Assignment, Question } from '../../types';
 import { suggestGrading } from '../../config/gemini';
-import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award, Clock } from 'lucide-react';
+import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award, Clock, Image as ImageIcon, Upload, X } from 'lucide-react';
 
 interface GradingCenterProps {
   currentClass?: MathClass | null;
@@ -23,6 +23,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
   // Grading form state
   const [score, setScore] = useState<number>(10);
   const [feedback, setFeedback] = useState<string>('');
+  const [feedbackImage, setFeedbackImage] = useState<string>('');
   const [isGradingAI, setIsGradingAI] = useState(false);
 
   useEffect(() => {
@@ -237,6 +238,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
 
   const handleSelectSubmission = (sub: Submission) => {
     setSelectedSubmission(sub);
+    setFeedbackImage(sub.final_feedback_image || '');
     const autoResult = calculateExactSubmissionScore(sub);
     if (sub.is_finalized && sub.final_score !== undefined) {
       setScore(sub.final_score);
@@ -247,43 +249,6 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     }
   };
 
-  const handleRequestAIGrading = async () => {
-    if (!selectedSubmission) return;
-    const currentAssignment = assignments.find((a) => a.id === selectedAssignmentId);
-    if (!currentAssignment) return;
-
-    setIsGradingAI(true);
-    try {
-      const result = await suggestGrading(currentAssignment.questions_json || [], selectedSubmission.answers_json);
-
-      const updatedSub: Submission = {
-        ...selectedSubmission,
-        ai_suggested_score: result.suggested_score,
-        ai_suggested_feedback: result.suggested_feedback,
-      };
-
-      saveLocalSubmission(updatedSub);
-      setScore(result.suggested_score);
-      setFeedback(result.suggested_feedback);
-
-      try {
-        await supabase
-          .from('submissions')
-          .update({
-            ai_suggested_score: result.suggested_score,
-            ai_suggested_feedback: result.suggested_feedback,
-          })
-          .eq('id', selectedSubmission.id);
-      } catch (e) {}
-
-      fetchSubmissions(selectedAssignmentId);
-    } catch (err: any) {
-      alert('Không thể chạy AI chấm bài: ' + err.message);
-    } finally {
-      setIsGradingAI(false);
-    }
-  };
-
   const handleFinalizeGrading = async () => {
     if (!selectedSubmission) return;
 
@@ -291,6 +256,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
       ...selectedSubmission,
       final_score: score,
       final_feedback: feedback,
+      final_feedback_image: feedbackImage,
       is_finalized: true,
       finalized_at: new Date().toISOString(),
       finalized_by: user?.id,
@@ -306,6 +272,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
         .update({
           final_score: score,
           final_feedback: feedback,
+          final_feedback_image: feedbackImage,
           is_finalized: true,
           finalized_at: new Date().toISOString(),
           finalized_by: user?.id,
@@ -454,9 +421,68 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                       type="text"
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Con làm bài rất tốt, phát huy nhé!"
+                      placeholder="Em làm bài rất tốt, phát huy nhé!"
                       className="w-full px-3 py-2.5 rounded-xl border border-emerald-300 text-sm font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
                     />
+                  </div>
+
+                  {/* Feedback Image Attachment */}
+                  <div className="sm:col-span-3 space-y-2 pt-1 border-t border-emerald-200/60">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-emerald-900 uppercase flex items-center gap-1">
+                        <ImageIcon className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>Ảnh đính kèm nhận xét / bài giải mẫu (Tùy chọn):</span>
+                      </label>
+                      {feedbackImage && (
+                        <button
+                          type="button"
+                          onClick={() => setFeedbackImage('')}
+                          className="text-[11px] font-bold text-rose-600 hover:underline flex items-center gap-0.5"
+                        >
+                          <X className="w-3 h-3" /> Xóa ảnh đính kèm
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 items-center">
+                      <input
+                        type="text"
+                        value={feedbackImage}
+                        onChange={(e) => setFeedbackImage(e.target.value)}
+                        placeholder="Dán URL ảnh hoặc tải từ máy (https://...)..."
+                        className="flex-1 px-3 py-2 rounded-xl border border-emerald-300 text-xs bg-white"
+                      />
+                      <label className="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-bold px-3 py-2 rounded-xl text-xs border border-emerald-300 cursor-pointer shrink-0 flex items-center space-x-1">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Tải ảnh từ máy</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (uploadEvt) => {
+                                const base64 = uploadEvt.target?.result as string;
+                                setFeedbackImage(base64);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    {feedbackImage && (
+                      <div className="mt-2 p-2 bg-emerald-100/50 rounded-xl border border-emerald-200 text-center">
+                        <img
+                          src={feedbackImage}
+                          alt="Ảnh đính kèm từ Giáo viên"
+                          className="max-h-48 rounded-lg mx-auto object-contain shadow-xs"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -484,7 +510,6 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                   }
                 }
 
-                // Fallback search in localStorage if React state questions array is empty
                 if (questions.length === 0 && selectedAssignmentId) {
                   try {
                     const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_KEY);
@@ -508,10 +533,11 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                       <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide">Chi Tiết Bài Làm Của Học Sinh:</h4>
                       <div className="space-y-3">
                         {questions.map((q, idx) => {
-                          const studentAns = selectedSubmission.answers_json?.[q.id] || selectedSubmission.answers_json?.[`q_${idx}`] || (selectedSubmission.answers_json ? Object.values(selectedSubmission.answers_json)[idx] : undefined);
-                          const qTimes = selectedSubmission.question_times_json || {};
-                          const qTime = qTimes[q.id] ?? qTimes[`q_${idx}`] ?? qTimes[idx] ?? (Object.values(qTimes)[idx]);
+                          const answers = selectedSubmission.answers_json || {};
+                          const studentAns = answers[q.id] ?? answers[`q_${idx}`] ?? answers[idx] ?? Object.values(answers)[idx];
                           const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+                          const qTimes = selectedSubmission.question_times_json || {};
+                          const qTime = qTimes[q.id] ?? qTimes[`q_${idx}`] ?? qTimes[idx] ?? Object.values(qTimes)[idx];
 
                           const formatQuestionTime = (seconds?: number | string, qIndex: number = 0) => {
                             if (seconds !== undefined && seconds !== null && seconds !== '') {
@@ -531,8 +557,17 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                           return (
                             <div key={q.id || idx} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-3">
                               <div className="flex justify-between items-start gap-2">
-                                <div className="font-extrabold text-slate-900 text-sm">
-                                  Câu {idx + 1}: {q.prompt}
+                                <div>
+                                  <div className="font-extrabold text-slate-900 text-sm">
+                                    Câu {idx + 1}: {q.prompt}
+                                  </div>
+                                  {q.image_url && (
+                                    <img
+                                      src={q.image_url}
+                                      alt={`Ảnh minh họa câu ${idx + 1}`}
+                                      className="max-h-44 rounded-xl border border-slate-200 object-contain my-2 bg-white shadow-xs"
+                                    />
+                                  )}
                                 </div>
 
                                 <div className="flex items-center space-x-2 shrink-0">

@@ -244,6 +244,16 @@ export const AssignmentsView: React.FC = () => {
                 Câu {qIdx + 1}: {q.prompt}
               </div>
 
+              {q.image_url && (
+                <div className="my-3 text-center bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
+                  <img
+                    src={q.image_url}
+                    alt={`Minh họa câu ${qIdx + 1}`}
+                    className="max-h-60 rounded-xl mx-auto object-contain"
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                 {q.options?.map((opt, optIdx) => {
                   const isSelected = answers[q.id] === opt;
@@ -406,9 +416,20 @@ export const AssignmentsView: React.FC = () => {
                   </div>
 
                   {submissions[reviewAssignment.id].final_feedback && (
-                    <div className="text-xs text-emerald-900 pt-1 border-t border-emerald-200/60">
-                      <strong>Lời nhắn của Thầy Cô:</strong>{' '}
-                      <span className="italic font-medium">"{submissions[reviewAssignment.id].final_feedback}"</span>
+                    <div className="text-xs text-emerald-900 pt-1 border-t border-emerald-200/60 space-y-2">
+                      <div>
+                        <strong>Lời nhắn của Thầy Cô:</strong>{' '}
+                        <span className="italic font-medium">"{submissions[reviewAssignment.id].final_feedback}"</span>
+                      </div>
+                      {submissions[reviewAssignment.id].final_feedback_image && (
+                        <div className="p-2 bg-white rounded-2xl border border-emerald-200 text-center">
+                          <img
+                            src={submissions[reviewAssignment.id].final_feedback_image}
+                            alt="Ảnh nhận xét từ Thầy Cô"
+                            className="max-h-52 rounded-xl mx-auto object-contain shadow-xs"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -443,8 +464,17 @@ export const AssignmentsView: React.FC = () => {
                 return (
                   <div key={q.id || qIdx} className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-4">
                     <div className="flex justify-between items-start gap-2">
-                      <div className="font-bold text-slate-900 text-base">
-                        Câu {qIdx + 1}: {q.prompt}
+                      <div>
+                        <div className="font-bold text-slate-900 text-base">
+                          Câu {qIdx + 1}: {q.prompt}
+                        </div>
+                        {q.image_url && (
+                          <img
+                            src={q.image_url}
+                            alt={`Ảnh minh họa câu ${qIdx + 1}`}
+                            className="max-h-52 rounded-2xl border border-slate-200 object-contain my-2 bg-white shadow-xs"
+                          />
+                        )}
                       </div>
 
                       <div className="flex items-center space-x-2 shrink-0">
