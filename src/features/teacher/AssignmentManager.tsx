@@ -11,6 +11,48 @@ interface AssignmentManagerProps {
 
 const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
 
+// Helper function to compress and resize image before converting to base64
+const compressAndResizeImage = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width = Math.round((width * MAX_HEIGHT) / height);
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        } else {
+          resolve(e.target?.result as string);
+        }
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
 export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentClass }) => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -438,7 +480,7 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                 className="bg-sky-50 hover:bg-sky-100 text-sky-700 font-extrabold px-3 py-1.5 rounded-xl text-xs border border-sky-200 transition-all flex items-center space-x-1"
               >
                 <Plus className="w-4 h-4 text-sky-600" />
-                <span>Thêm Câu Hỏi Tiếp Theo</span>
+                <span>+ Thêm Câu Hỏi Tiếp Theo</span>
               </button>
             </div>
 
@@ -446,135 +488,96 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
             <div className="space-y-6">
               {questions.map((q, qIdx) => (
                 <div key={q.id || qIdx} className="p-5 rounded-2xl border-2 border-slate-200 bg-slate-50/70 space-y-4 shadow-sm">
-                  {/* Question Header & Image Button */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/80 pb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="bg-sky-600 text-white font-extrabold text-xs px-3 py-1 rounded-xl shadow-xs">
-                        Câu {qIdx + 1}
-                      </span>
-                    </div>
+                  {/* Question Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                    <span className="bg-sky-600 text-white font-extrabold text-xs px-3 py-1 rounded-xl shadow-xs">
+                      Câu {qIdx + 1}
+                    </span>
 
-                    <div className="flex items-center space-x-2">
-                      {/* Prominent Question Image Button */}
-                      <label className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-3 py-1.5 rounded-xl text-xs shadow-md cursor-pointer flex items-center space-x-1.5 transition-all active:scale-95">
-                        <Plus className="w-4 h-4 text-white shrink-0" />
-                        <ImageIcon className="w-4 h-4 text-white shrink-0" />
-                        <span>➕ 🖼️ Đính Kèm Ảnh Cho Câu {qIdx + 1}</span>
-                        <input
-                          type="file"
-                          accept="image/jpg,image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (uploadEvt) => {
-                                const base64 = uploadEvt.target?.result as string;
-                                handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-
-                      {questions.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveQuestion(qIdx)}
-                          className="text-rose-600 hover:bg-rose-50 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors"
-                        >
-                          Xóa câu này
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Question Prompt Input + Inline Image Button */}
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-extrabold text-slate-700 uppercase">
-                      Nội dung câu hỏi (Nhấn nút <span className="text-sky-600 font-black">➕ 🖼️</span> sát bên phải để tải/đổi ảnh câu hỏi):
-                    </label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="text"
-                        value={q.prompt}
-                        onChange={(e) => handleUpdateQuestion(qIdx, { ...q, prompt: e.target.value })}
-                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-xs"
-                        placeholder="Nhập nội dung câu hỏi mới..."
-                      />
-                      <label
-                        title="Tải / đính kèm ảnh cho câu hỏi này"
-                        className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-3 py-2.5 rounded-xl text-xs shadow-md cursor-pointer shrink-0 flex items-center space-x-1.5 transition-all active:scale-95"
+                    {questions.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveQuestion(qIdx)}
+                        className="text-rose-600 hover:bg-rose-50 px-2.5 py-1 rounded-lg text-xs font-bold transition-colors"
                       >
-                        <Plus className="w-4 h-4 text-white shrink-0" />
-                        <ImageIcon className="w-4 h-4 text-white shrink-0" />
-                        <span className="font-extrabold">➕ 🖼️</span>
-                        <input
-                          type="file"
-                          accept="image/jpg,image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (uploadEvt) => {
-                                const base64 = uploadEvt.target?.result as string;
-                                handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
+                        Xóa câu này
+                      </button>
+                    )}
                   </div>
 
-                  {/* Question Image Preview */}
-                  {q.image_url && (
-                    <div className="relative group p-2 bg-white rounded-2xl border border-slate-300 text-center inline-block max-w-full my-1 shadow-xs">
-                      <img
-                        src={q.image_url}
-                        alt={`Minh họa câu ${qIdx + 1}`}
-                        className="max-h-48 rounded-xl mx-auto object-contain shadow-xs"
-                      />
-                      <div className="mt-2 flex justify-center space-x-2">
-                        <label className="bg-sky-50 hover:bg-sky-100 text-sky-800 text-[11px] font-bold px-3 py-1 rounded-lg border border-sky-300 cursor-pointer shadow-xs flex items-center space-x-1">
+                  {/* Question Prompt Input + Image Upload Options */}
+                  <div className="space-y-2 p-3 bg-white rounded-xl border border-slate-200 shadow-2xs">
+                    <label className="block text-xs font-extrabold text-slate-800 uppercase">
+                      Nội dung đề câu hỏi {qIdx + 1}:
+                    </label>
+                    <input
+                      type="text"
+                      value={q.prompt}
+                      onChange={(e) => handleUpdateQuestion(qIdx, { ...q, prompt: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none shadow-xs"
+                      placeholder="Nhập nội dung câu hỏi mới..."
+                    />
+
+                    {/* Image Attachment Controls for Question */}
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-sky-800 uppercase flex items-center gap-1">
+                          <ImageIcon className="w-3.5 h-3.5 text-sky-600" />
+                          <span>Ảnh minh họa câu hỏi {qIdx + 1}:</span>
+                        </span>
+                        {q.image_url && (
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateQuestion(qIdx, { ...q, image_url: '' })}
+                            className="text-[11px] font-bold text-rose-600 hover:underline flex items-center gap-0.5"
+                          >
+                            <X className="w-3.5 h-3.5" /> Xóa ảnh
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="text"
+                          value={q.image_url || ''}
+                          onChange={(e) => handleUpdateQuestion(qIdx, { ...q, image_url: e.target.value })}
+                          placeholder="Dán liên kết URL ảnh (https://...)..."
+                          className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white font-medium"
+                        />
+                        <label className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-3 py-2 rounded-xl text-xs shadow-xs cursor-pointer shrink-0 flex items-center justify-center space-x-1.5 transition-all active:scale-95">
                           <Upload className="w-3.5 h-3.5" />
-                          <span>Thay ảnh</span>
+                          <span>Tải Ảnh Từ Máy</span>
                           <input
                             type="file"
-                            accept="image/jpg,image/jpeg,image/png,image/webp"
+                            accept="image/*"
                             className="hidden"
-                            onChange={(e) => {
+                            onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (uploadEvt) => {
-                                  const base64 = uploadEvt.target?.result as string;
-                                  handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
-                                };
-                                reader.readAsDataURL(file);
+                                const base64 = await compressAndResizeImage(file);
+                                handleUpdateQuestion(qIdx, { ...q, image_url: base64 });
                               }
                             }}
                           />
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateQuestion(qIdx, { ...q, image_url: '' })}
-                          className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold px-3 py-1 rounded-lg border border-rose-200 shadow-xs flex items-center space-x-1"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          <span>Xóa ảnh</span>
-                        </button>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Options with Inline + Image Buttons */}
+                      {q.image_url && (
+                        <div className="mt-2 p-2 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                          <img
+                            src={q.image_url}
+                            alt={`Minh họa câu ${qIdx + 1}`}
+                            className="max-h-48 rounded-lg mx-auto object-contain shadow-xs bg-white p-1"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Options with Image Uploads */}
                   <div className="space-y-2 pt-2 border-t border-slate-200/60">
                     <label className="block text-xs font-bold text-slate-600 uppercase">
-                      Lựa chọn đáp án (Nhấn nút <span className="text-sky-600 font-black">➕ 🖼️</span> sát bên phải từng đáp án để đính kèm ảnh A, B, C, D):
+                      Lựa chọn đáp án (Mỗi lựa chọn A, B, C, D đều có ô nhập văn bản và nút <span className="text-sky-600 font-black">Tải ảnh / Dán URL ảnh</span> riêng biệt):
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -606,67 +609,15 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                                   });
                                 }}
                                 placeholder={`Lựa chọn ${optLabel}`}
-                                className="flex-1 px-2.5 py-2 rounded-lg border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                                className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"
                               />
-                              <label
-                                title={`Tải ảnh cho lựa chọn ${optLabel}`}
-                                className="bg-sky-100 hover:bg-sky-200 text-sky-800 font-black px-2.5 py-2 rounded-lg border border-sky-300 cursor-pointer shrink-0 flex items-center space-x-1 text-xs shadow-2xs transition-all active:scale-95"
-                              >
-                                <Plus className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-                                <ImageIcon className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-                                <span className="font-extrabold">➕ 🖼️</span>
-                                <input
-                                  type="file"
-                                  accept="image/jpg,image/jpeg,image/png,image/webp"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = (uploadEvt) => {
-                                        const base64 = uploadEvt.target?.result as string;
-                                        const newOptImgs = [...(q.option_images || ['', '', '', ''])];
-                                        newOptImgs[optIdx] = base64;
-                                        handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
-                                      };
-                                      reader.readAsDataURL(file);
-                                    }
-                                  }}
-                                />
-                              </label>
                             </div>
 
-                            {/* Option image thumbnail preview if present */}
-                            {optImg && (
-                              <div className="relative p-2 bg-slate-50 rounded-xl border border-slate-200 text-center space-y-1.5">
-                                <img
-                                  src={optImg}
-                                  alt={`Ảnh lựa chọn ${optLabel}`}
-                                  className="max-h-28 rounded-lg object-contain mx-auto shadow-xs bg-white p-1 border border-slate-200"
-                                />
-                                <div className="flex justify-center space-x-2">
-                                  <label className="bg-white hover:bg-sky-50 text-sky-700 text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 cursor-pointer flex items-center space-x-1">
-                                    <Upload className="w-3 h-3" />
-                                    <span>Thay ảnh</span>
-                                    <input
-                                      type="file"
-                                      accept="image/jpg,image/jpeg,image/png,image/webp"
-                                      className="hidden"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          const reader = new FileReader();
-                                          reader.onload = (uploadEvt) => {
-                                            const base64 = uploadEvt.target?.result as string;
-                                            const newOptImgs = [...(q.option_images || ['', '', '', ''])];
-                                            newOptImgs[optIdx] = base64;
-                                            handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
-                                          };
-                                          reader.readAsDataURL(file);
-                                        }
-                                      }}
-                                    />
-                                  </label>
+                            {/* Option Image Controls */}
+                            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-bold text-slate-600">Ảnh đáp án {optLabel}:</span>
+                                {optImg && (
                                   <button
                                     type="button"
                                     onClick={() => {
@@ -674,14 +625,55 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
                                       newOptImgs[optIdx] = '';
                                       handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
                                     }}
-                                    className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-[10px] font-bold px-2 py-0.5 rounded border border-rose-200 flex items-center space-x-1"
+                                    className="text-rose-600 font-bold hover:underline text-[10px]"
                                   >
-                                    <X className="w-3 h-3" />
-                                    <span>Xóa</span>
+                                    Xóa ảnh
                                   </button>
-                                </div>
+                                )}
                               </div>
-                            )}
+
+                              <div className="flex gap-1.5">
+                                <input
+                                  type="text"
+                                  value={optImg || ''}
+                                  onChange={(e) => {
+                                    const newOptImgs = [...(q.option_images || ['', '', '', ''])];
+                                    newOptImgs[optIdx] = e.target.value;
+                                    handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
+                                  }}
+                                  placeholder="URL ảnh..."
+                                  className="flex-1 px-2 py-1 rounded-lg border border-slate-200 text-[11px] font-medium"
+                                />
+                                <label className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-2.5 py-1 rounded-lg border border-sky-600 cursor-pointer text-[11px] shrink-0 flex items-center space-x-1 shadow-2xs transition-all active:scale-95">
+                                  <Upload className="w-3 h-3" />
+                                  <span>Tải Ảnh</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const base64 = await compressAndResizeImage(file);
+                                        const newOptImgs = [...(q.option_images || ['', '', '', ''])];
+                                        newOptImgs[optIdx] = base64;
+                                        handleUpdateQuestion(qIdx, { ...q, option_images: newOptImgs });
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+
+                              {optImg && (
+                                <div className="mt-1 p-1 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                                  <img
+                                    src={optImg}
+                                    alt={`Ảnh lựa chọn ${optLabel}`}
+                                    className="max-h-24 rounded object-contain mx-auto bg-white p-1"
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         );
                       })}
