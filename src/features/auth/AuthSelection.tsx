@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
+import { KidsMindHero } from '../../components/common/KidsMindHero';
 import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
 
 const REMEMBERED_EMAIL_KEY = 'hanhtrinhtoanhoc_remembered_email';
@@ -117,12 +118,15 @@ export const AuthSelection: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden space-y-8">
       {/* Background Decor */}
       <div className="absolute top-10 left-10 text-sky-200 text-8xl font-black select-none pointer-events-none opacity-40 animate-pulse">+</div>
       <div className="absolute bottom-10 right-10 text-amber-200 text-8xl font-black select-none pointer-events-none opacity-40 animate-pulse">×</div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-xl text-center relative z-10">
+      {/* 🌟 KidsMind Inspired 3D Visual Hero Banner */}
+      <KidsMindHero studentName="Bạn Nhỏ" />
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="inline-flex items-center justify-center space-x-2 bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-sm mb-4 shadow-sm">
           <Sparkles className="w-4 h-4 text-amber-600" />
           <span>Nền Tảng Quản Lý Giáo Dục & Game Tương Tác</span>

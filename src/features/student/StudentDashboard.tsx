@@ -9,6 +9,7 @@ import { MaterialsView } from './MaterialsView';
 import { ResultsProgressView } from './ResultsProgressView';
 import { StudentLeaderboard } from './StudentLeaderboard';
 import { StudentProfile } from './StudentProfile';
+import { KidsMindHero } from '../../components/common/KidsMindHero';
 import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Award, Trophy, User, PlusCircle, CheckCircle, Play } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
@@ -260,7 +261,13 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Render Active View */}
       {activeTab === 'home' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* 🌟 KidsMind Inspired 3D Visual Hero Banner */}
+          <KidsMindHero
+            studentName={profile?.full_name || 'Học sinh'}
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+          />
+
           {/* Join Class Box */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-4">
             <h3 className="text-lg font-bold text-slate-900 flex items-center space-x-2 font-display">
