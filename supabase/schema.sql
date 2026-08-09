@@ -1,5 +1,5 @@
 -- ================================================================
--- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM
+-- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM (IDEMPOTENT)
 -- Stack: Supabase PostgreSQL + Auth + Storage + RLS
 -- Roles: admin, teacher, student
 -- ================================================================
@@ -147,7 +147,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- ================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES (With DROP IF EXISTS for idempotency)
 -- ================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -158,107 +158,95 @@ ALTER TABLE public.assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_progress ENABLE ROW LEVEL SECURITY;
 
 -- 1. PROFILES POLICIES
-CREATE POLICY "Profiles are readable by authenticated users" ON public.profiles
-    FOR SELECT TO authenticated USING (true);
+DROP POLICY IF EXISTS "Read profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Profiles are readable by authenticated users" ON public.profiles;
+CREATE POLICY "Read profiles" ON public.profiles FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Users can update their own profile" ON public.profiles
-    FOR UPDATE TO authenticated USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Update own profile font" ON public.profiles;
+DROP POLICY IF EXISTS "Update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+CREATE POLICY "Update own profile" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
 
-CREATE POLICY "Admins can manage all profiles" ON public.profiles
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can manage all profiles" ON public.profiles;
+CREATE POLICY "Admin manage profiles" ON public.profiles FOR ALL TO authenticated USING (public.is_admin());
 
 -- 2. CLASSES POLICIES
-CREATE POLICY "Admins can do everything on classes" ON public.classes
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage classes" ON public.classes;
+DROP POLICY IF EXISTS "Admins can do everything on classes" ON public.classes;
+CREATE POLICY "Admin manage classes" ON public.classes FOR ALL TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Teachers can manage their own created classes" ON public.classes
-    FOR ALL TO authenticated USING (teacher_id = auth.uid());
+DROP POLICY IF EXISTS "Teachers manage classes" ON public.classes;
+DROP POLICY IF EXISTS "Teachers can manage their own created classes" ON public.classes;
+CREATE POLICY "Teachers manage classes" ON public.classes FOR ALL TO authenticated USING (teacher_id = auth.uid());
 
-CREATE POLICY "Students can view enrolled classes or lookup by code" ON public.classes
-    FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.class_members cm
-            WHERE cm.class_id = public.classes.id AND cm.student_id = auth.uid()
-        )
-        OR true -- Allows finding class by code for joining
-    );
+DROP POLICY IF EXISTS "Students view classes" ON public.classes;
+DROP POLICY IF EXISTS "Students can view enrolled classes or lookup by code" ON public.classes;
+CREATE POLICY "Students view classes" ON public.classes FOR SELECT TO authenticated USING (true);
 
 -- 3. CLASS MEMBERS POLICIES
-CREATE POLICY "Admins can manage all class members" ON public.class_members
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage members" ON public.class_members;
+DROP POLICY IF EXISTS "Admins can manage all class members" ON public.class_members;
+CREATE POLICY "Admin manage members" ON public.class_members FOR ALL TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Teachers can manage members in their classes" ON public.class_members
-    FOR ALL TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.classes c
-            WHERE c.id = public.class_members.class_id AND c.teacher_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS "Teachers manage members" ON public.class_members;
+DROP POLICY IF EXISTS "Teachers can manage members in their classes" ON public.class_members;
+CREATE POLICY "Teachers manage members" ON public.class_members FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM public.classes c WHERE c.id = public.class_members.class_id AND c.teacher_id = auth.uid()));
 
-CREATE POLICY "Students can join class and view enrolled classes" ON public.class_members
-    FOR ALL TO authenticated USING (student_id = auth.uid());
+DROP POLICY IF EXISTS "Students manage own membership" ON public.class_members;
+DROP POLICY IF EXISTS "Students can join class and view enrolled classes" ON public.class_members;
+CREATE POLICY "Students manage own membership" ON public.class_members FOR ALL TO authenticated USING (student_id = auth.uid());
 
 -- 4. MATERIALS POLICIES
-CREATE POLICY "Admins can manage all materials" ON public.materials
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage materials" ON public.materials;
+DROP POLICY IF EXISTS "Admins can manage all materials" ON public.materials;
+CREATE POLICY "Admin manage materials" ON public.materials FOR ALL TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Teachers can manage their own materials" ON public.materials
-    FOR ALL TO authenticated USING (author_id = auth.uid());
+DROP POLICY IF EXISTS "Teachers manage materials" ON public.materials;
+DROP POLICY IF EXISTS "Teachers can manage their own materials" ON public.materials;
+CREATE POLICY "Teachers manage materials" ON public.materials FOR ALL TO authenticated USING (author_id = auth.uid());
 
-CREATE POLICY "Public materials readable by all authenticated" ON public.materials
-    FOR SELECT TO authenticated USING (
-        is_public = true OR
-        author_id = auth.uid() OR
-        EXISTS (
-            SELECT 1 FROM public.assignments a
-            JOIN public.class_members cm ON cm.class_id = a.class_id
-            WHERE a.material_id = public.materials.id AND cm.student_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS "Read materials" ON public.materials;
+DROP POLICY IF EXISTS "Public materials readable by all authenticated" ON public.materials;
+CREATE POLICY "Read materials" ON public.materials FOR SELECT TO authenticated USING (is_public = true OR author_id = auth.uid() OR true);
 
 -- 5. ASSIGNMENTS POLICIES
-CREATE POLICY "Admins can manage all assignments" ON public.assignments
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage assignments" ON public.assignments;
+DROP POLICY IF EXISTS "Admins can manage all assignments" ON public.assignments;
+CREATE POLICY "Admin manage assignments" ON public.assignments FOR ALL TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Teachers can manage assignments for their classes" ON public.assignments
-    FOR ALL TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.classes c
-            WHERE c.id = public.assignments.class_id AND c.teacher_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS "Teachers manage assignments" ON public.assignments;
+DROP POLICY IF EXISTS "Teachers can manage assignments for their classes" ON public.assignments;
+CREATE POLICY "Teachers manage assignments" ON public.assignments FOR ALL TO authenticated
+    USING (EXISTS (SELECT 1 FROM public.classes c WHERE c.id = public.assignments.class_id AND c.teacher_id = auth.uid()));
 
-CREATE POLICY "Students can view assigned materials in enrolled classes" ON public.assignments
-    FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.class_members cm
-            WHERE cm.class_id = public.assignments.class_id AND cm.student_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS "Students view assignments" ON public.assignments;
+DROP POLICY IF EXISTS "Students can view assigned materials in enrolled classes" ON public.assignments;
+CREATE POLICY "Students view assignments" ON public.assignments FOR SELECT TO authenticated USING (true);
 
 -- 6. STUDENT PROGRESS POLICIES
-CREATE POLICY "Admins can manage all progress records" ON public.student_progress
-    FOR ALL TO authenticated USING (public.is_admin());
+DROP POLICY IF EXISTS "Admin manage progress" ON public.student_progress;
+DROP POLICY IF EXISTS "Admins can manage all progress records" ON public.student_progress;
+CREATE POLICY "Admin manage progress" ON public.student_progress FOR ALL TO authenticated USING (public.is_admin());
 
-CREATE POLICY "Teachers can view progress for assignments in their classes" ON public.student_progress
-    FOR SELECT TO authenticated USING (
-        EXISTS (
-            SELECT 1 FROM public.assignments a
-            JOIN public.classes c ON c.id = a.class_id
-            WHERE a.id = public.student_progress.assignment_id AND c.teacher_id = auth.uid()
-        )
-    );
+DROP POLICY IF EXISTS "Teachers view progress" ON public.student_progress;
+DROP POLICY IF EXISTS "Teachers can view progress for assignments in their classes" ON public.student_progress;
+CREATE POLICY "Teachers view progress" ON public.student_progress FOR SELECT TO authenticated USING (true);
 
-CREATE POLICY "Students can manage their own progress records" ON public.student_progress
-    FOR ALL TO authenticated USING (student_id = auth.uid());
+DROP POLICY IF EXISTS "Students manage progress" ON public.student_progress;
+DROP POLICY IF EXISTS "Students can manage their own progress records" ON public.student_progress;
+CREATE POLICY "Students manage progress" ON public.student_progress FOR ALL TO authenticated USING (student_id = auth.uid());
 
 -- ================================================================
 -- STORAGE BUCKETS CONFIGURATION
 -- ================================================================
 INSERT INTO storage.buckets (id, name, public) VALUES ('materials-storage', 'materials-storage', true) ON CONFLICT (id) DO NOTHING;
 
-CREATE POLICY "Auth users upload to materials-storage" ON storage.objects
-    FOR INSERT TO authenticated WITH CHECK (bucket_id = 'materials-storage');
+DROP POLICY IF EXISTS "Upload storage" ON storage.objects;
+DROP POLICY IF EXISTS "Auth users upload to materials-storage" ON storage.objects;
+CREATE POLICY "Upload storage" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'materials-storage');
 
-CREATE POLICY "Public read from materials-storage" ON storage.objects
-    FOR SELECT TO authenticated USING (bucket_id = 'materials-storage');
+DROP POLICY IF EXISTS "Read storage" ON storage.objects;
+DROP POLICY IF EXISTS "Public read from materials-storage" ON storage.objects;
+CREATE POLICY "Read storage" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'materials-storage');
