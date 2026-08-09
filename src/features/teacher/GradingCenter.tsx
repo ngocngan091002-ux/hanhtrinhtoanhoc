@@ -271,7 +271,8 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     const autoResult = calculateExactSubmissionScore(sub);
     if (sub.is_finalized && sub.final_score !== undefined) {
       setScore(sub.final_score);
-      setFeedback(sub.final_feedback || autoResult.feedback);
+      const cleanFb = sub.final_feedback ? sub.final_feedback.replace(/\bCon\b/g, 'Em').replace(/\bcon\b/g, 'em') : autoResult.feedback;
+      setFeedback(cleanFb);
     } else {
       setScore(autoResult.score);
       setFeedback(autoResult.feedback);
@@ -324,7 +325,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
             <span>Trung Tâm Chấm Bài & Chốt Điểm</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            AI gợi ý điểm + nhận xét $\rightarrow$ Giáo viên kiểm tra/sửa $\rightarrow$ Bấm **CHỐT KẾT QUẢ** $\rightarrow$ Điểm gửi trực tiếp tới Học sinh.
+            Tự động chấm điểm & đối chiếu đáp án $\rightarrow$ Giáo viên kiểm tra/sửa nhận xét $\rightarrow$ Bấm **CHỐT KẾT QUẢ** $\rightarrow$ Điểm gửi trực tiếp tới Học sinh.
           </p>
         </div>
 

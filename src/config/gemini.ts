@@ -84,7 +84,7 @@ export async function generateAIQuestions(topic: string, grade: number = 3, coun
 YÊU CẦU BẮT BUỘC:
 1. Tạo danh sách ${count} câu hỏi trắc nghiệm toán tiểu học thuộc chính xác chủ đề: "${topic}".
 2. PHẢI ĐẢM BẢO độ khó và giới hạn số tính toán NẰM ĐÚNG PHẠM VI "${topic}". 
-   Ví dụ: Nếu chủ đề ghi "phạm vi 20" thì tất cả các số và kết quả PHẢI nhỏ hơn hoặc bằng 20 (tuyệt đối không cho số hàng trăm hay chu vi hình phức tạp).
+   Ví dụ: Nếu chủ đề ghi "phạm vi 20" thì tất cả các số và kết quả PHẢI nhỏ hơn hoặc bằng 20.
 3. Trả về định dạng JSON thuần túy (Array of objects), mỗi object gồm:
 - id: chuỗi ngẫu nhiên (q1, q2...)
 - prompt: nội dung câu hỏi ngắn gọn, vui tươi, chuẩn kiến thức Lớp ${grade}
@@ -117,15 +117,15 @@ CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG CÓ MARKDOWN HOẶC DẪN NHẬP.`;
 }
 
 export async function suggestGrading(questions: any[], answers: Record<string, string>) {
-  const prompt = `Bạn là trợ lý AI giáo viên toán tiểu học.
+  const prompt = `Bạn là trợ lý giáo viên toán tiểu học.
 Danh sách câu hỏi: ${JSON.stringify(questions)}
 Bài làm của học sinh: ${JSON.stringify(answers)}
 
-Hãy kiểm tra bài làm, đưa ra gợi ý chấm điểm từ 0.0 đến 10.0 và nhận xét ngắn gọn, ấm áp, động viên học sinh.
+Hãy kiểm tra bài làm, đưa ra gợi ý chấm điểm từ 0.0 đến 10.0 và nhận xét ngắn gọn, động viên học sinh (XƯNG THẦY/CÔ HOẶC GIÁO VIÊN, GỌI HỌC SINH LÀ "EM", TUYỆT ĐỐI KHÔNG DÙNG TỪ "CON").
 Trả về định dạng JSON:
 {
   "suggested_score": 9.0,
-  "suggested_feedback": "Con làm bài rất xuất sắc! Đã làm đúng hầu hết các câu."
+  "suggested_feedback": "Em làm bài rất xuất sắc! Đã làm đúng hầu hết các câu."
 }
 CHỈ TRẢ VỀ JSON HỢP LỆ.`;
 
@@ -146,11 +146,11 @@ CHỈ TRẢ VỀ JSON HỢP LỆ.`;
   const calculatedScore = questions.length > 0 ? Math.round(((correctCount / questions.length) * 10) * 10) / 10 : 10;
   let defaultFeedback = '';
   if (correctCount === questions.length) {
-    defaultFeedback = `Con làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
+    defaultFeedback = `Em làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
   } else if (correctCount > 0) {
-    defaultFeedback = `Con làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần xem lại ${wrongQuestions.join(', ')} nhé!`;
+    defaultFeedback = `Em làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần chú ý ôn lại ${wrongQuestions.join(', ')} nhé!`;
   } else {
-    defaultFeedback = `Con cần cố gắng hơn ở bài sau nhé! Hãy xem lại đáp án gợi ý để ôn tập lại.`;
+    defaultFeedback = `Em cần cố gắng hơn ở bài sau nhé! Hãy xem lại đáp án gợi ý để ôn tập lại.`;
   }
 
   if (!ai) {
@@ -168,9 +168,12 @@ CHỈ TRẢ VỀ JSON HỢP LỆ.`;
     const text = response.text || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleanJson);
+    let fb = parsed.suggested_feedback || defaultFeedback;
+    fb = fb.replace(/\bCon\b/g, 'Em').replace(/\bcon\b/g, 'em');
+
     return {
       suggested_score: parsed.suggested_score !== undefined ? parsed.suggested_score : calculatedScore,
-      suggested_feedback: parsed.suggested_feedback || defaultFeedback,
+      suggested_feedback: fb,
     };
   } catch (error) {
     console.error('Error suggesting grading:', error);
@@ -182,7 +185,7 @@ CHỈ TRẢ VỀ JSON HỢP LỆ.`;
 }
 
 export async function askMathTutorAI(question: string, contextMessage: string = '') {
-  const prompt = `Bạn là Trợ Lý Toán Học AI dành cho học sinh tiểu học (giọng điệu như người anh/chị gia sư vui tính, tận tâm).
+  const prompt = `Bạn là Trợ Lý Toán Học dành cho học sinh tiểu học (giọng điệu tận tâm, xưng Thầy/Cô, gọi học sinh là "em", KHÔNG DÙNG TỪ "CON").
 YÊU CẦU QUAN TRỌNG:
 1. KHÔNG được làm bài thay hay cho ngay đáp án cuối cùng.
 2. Hãy đặt câu hỏi gợi mở, hướng dẫn từng bước nhỏ để học sinh tự nghĩ ra đáp án.
@@ -192,7 +195,7 @@ Hỏi của học sinh: "${question}"
 Ngữ cảnh bài toán (nếu có): "${contextMessage}"`;
 
   if (!ai) {
-    return `Chào bạn nhỏ! 👋 Thầy/Cô AI ở đây để hỗ trợ bạn nhé. Đối với bài toán "${question}", bạn thử nhớ lại quy tắc tính xem phép tính nào thực hiện trước nhỉ? Bạn thử tính giúp mình xem sao nhé! 🌟`;
+    return `Chào em! 👋 Thầy/Cô ở đây để hỗ trợ em nhé. Đối với bài toán "${question}", em thử nhớ lại quy tắc tính xem phép tính nào thực hiện trước nhỉ? Em thử tính giúp Thầy/Cô xem sao nhé! 🌟`;
   }
 
   try {
@@ -200,15 +203,16 @@ Ngữ cảnh bài toán (nếu có): "${contextMessage}"`;
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
-    return response.text || 'Bạn nhỏ thử chia nhỏ bài toán ra làm 2 bước xem sao nhé!';
+    let text = response.text || 'Em thử chia nhỏ bài toán ra làm 2 bước xem sao nhé!';
+    text = text.replace(/\bCon\b/g, 'Em').replace(/\bcon\b/g, 'em');
+    return text;
   } catch (error) {
     console.error('AI tutor error:', error);
-    return 'Thầy AI đã nhận được câu hỏi. Con hãy thử đọc kỹ lại đề bài một lần nữa xem người ta hỏi gì nhé!';
+    return 'Thầy/Cô đã nhận được câu hỏi. Em hãy thử đọc kỹ lại đề bài một lần nữa xem bài toán hỏi gì nhé!';
   }
 }
 
 export async function analyzeStudentWeaknesses(studentName: string, performanceHistory: any[]) {
-  // Analyze performanceHistory locally for exact stats
   let totalQuestions = 0;
   let correctQuestions = 0;
   const wrongTopicsSet = new Set<string>();
@@ -224,13 +228,13 @@ export async function analyzeStudentWeaknesses(studentName: string, performanceH
 
     qList.forEach((q: any, idx: number) => {
       totalQuestions++;
-      const userAns = ansMap[q.id] || ansMap[`q_${idx}`] || (ansMap ? Object.values(ansMap)[idx] : undefined);
+      const userAns = ansMap[q.id] ?? ansMap[`q_${idx}`] ?? ansMap[idx] ?? (ansMap ? Object.values(ansMap)[idx] : undefined);
       const isCorrect = userAns === q.correct_answer || (q.correct_answer && String(userAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
 
       if (isCorrect) {
         correctQuestions++;
       } else {
-        const topic = item.assignment_title || q.prompt || 'Phép toán';
+        const topic = item.assignment_title ? `${item.assignment_title} (Câu ${idx + 1})` : q.prompt ? `Câu ${idx + 1}: ${q.prompt}` : `Câu ${idx + 1}`;
         wrongTopicsSet.add(topic);
       }
     });
@@ -239,41 +243,41 @@ export async function analyzeStudentWeaknesses(studentName: string, performanceH
   const accuracyPercent = totalQuestions > 0 ? Math.round((correctQuestions / totalQuestions) * 100) : 100;
   const weakTopics = Array.from(wrongTopicsSet);
 
-  const prompt = `Bạn là chuyên gia phân tích dữ liệu học tập tiểu học.
-Dựa trên lịch sử bài nộp thực tế của học sinh ${studentName}:
-${JSON.stringify(performanceHistory, null, 2)}
-
-Yêu cầu phân tích:
-1. Đánh giá mức độ trả lời đúng (Tỉ lệ % làm đúng: ${accuracyPercent}%).
-2. Đánh giá thời gian làm bài thực tế ở các câu hỏi (Nhanh/Vừa phải/Chậm).
-3. Chỉ ra cụ thể dạng toán học sinh làm sai hoặc chưa vững.
-4. Đưa ra nhận xét chi tiết, thực tế và hướng hỗ trợ cho Giáo viên.
-
-Trả về duy nhất định dạng JSON:
-{
-  "accuracy_rate": "${accuracyPercent}%",
-  "completion_speed": "Nhanh (khoảng 2 phút)",
-  "weak_topics": ${JSON.stringify(weakTopics.length > 0 ? weakTopics : ["Chưa phát hiện dạng toán yếu"])},
-  "recommendations": "Phân tích chi tiết dựa trên dữ liệu làm bài..."
-}`;
-
   if (!ai) {
     let rec = '';
     if (totalQuestions === 0) {
-      rec = `Học sinh ${studentName} chưa làm bài tập nào. Hãy giao bài tập để AI theo dõi tiến độ.`;
+      rec = `Học sinh ${studentName} chưa làm bài tập nào. Hãy giao bài tập để theo dõi tiến độ.`;
     } else if (accuracyPercent === 100) {
-      rec = `Học sinh ${studentName} hoàn thành xuất sắc ${correctQuestions}/${totalQuestions} câu hỏi (Đạt ${accuracyPercent}%) với thời gian làm bài nhanh mượt. Học sinh đã làm chủ tốt kiến thức này!`;
+      rec = `Học sinh ${studentName} hoàn thành xuất sắc ${correctQuestions}/${totalQuestions} câu hỏi (Đạt ${accuracyPercent}%) với thời gian làm bài nhanh mượt. Học sinh đã nắm vững 100% nội dung kiến thức được giao!`;
     } else {
-      rec = `Học sinh ${studentName} làm đúng ${correctQuestions}/${totalQuestions} câu (Đạt ${accuracyPercent}%). Cần chú ý thêm ở các dạng toán: ${weakTopics.join(', ')}. Giáo viên nên cho thêm bài tập rèn luyện dạng này.`;
+      rec = `Học sinh ${studentName} làm đúng ${correctQuestions}/${totalQuestions} câu (Đạt ${accuracyPercent}%). Cần chú ý rèn luyện thêm ở các câu làm sai: ${weakTopics.join(', ')}.`;
     }
 
     return {
       accuracy_rate: `${accuracyPercent}%`,
-      completion_speed: 'Nhanh (khoảng 2 phút)',
-      weak_topics: weakTopics.length > 0 ? weakTopics : ['Chưa có câu sai'],
+      completion_speed: 'Nhanh',
+      weak_topics: weakTopics.length > 0 ? weakTopics : ['Không có - Đúng 100%'],
       recommendations: rec,
     };
   }
+
+  const prompt = `Bạn là chuyên gia phân tích dữ liệu học tập tiểu học.
+Dựa trên lịch sử bài nộp thực tế của học sinh ${studentName}:
+${JSON.stringify(performanceHistory, null, 2)}
+
+YÊU CẦU BẮT BUỘC:
+1. Đánh giá chính xác tỉ lệ % làm đúng: ${accuracyPercent}%.
+2. Nếu tỉ lệ làm đúng là 100% (hoặc không có câu sai), danh sách weak_topics PHẢI LÀ ["Không có - Đúng 100%"] (TUYỆT ĐỐI KHÔNG BỊA RA CÁC DẠNG TOÁN LỜI VĂN HAY PHÉP CỘNG NẾU HỌC SINH KHÔNG LÀM SAI!).
+3. Chỉ nêu dạng toán làm sai NẾU HỌC SINH THỰC SỰ LÀM SAI TRONG DỮ LIỆU BÀI NỘP.
+4. Xưng gọi học sinh là "em" (TUYỆT ĐỐI KHÔNG DÙNG TỪ "CON").
+
+Trả về duy nhất định dạng JSON:
+{
+  "accuracy_rate": "${accuracyPercent}%",
+  "completion_speed": "Nhanh",
+  "weak_topics": ${JSON.stringify(weakTopics.length > 0 ? weakTopics : ["Không có - Đúng 100%"])},
+  "recommendations": "Nhận xét phân tích dựa trên dữ liệu..."
+}`;
 
   try {
     const response = await ai.models.generateContent({
@@ -282,16 +286,24 @@ Trả về duy nhất định dạng JSON:
     });
     const text = response.text || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
+    if (parsed.recommendations) {
+      parsed.recommendations = parsed.recommendations.replace(/\bCon\b/g, 'Em').replace(/\bcon\b/g, 'em');
+    }
+    if (accuracyPercent === 100) {
+      parsed.accuracy_rate = '100%';
+      parsed.weak_topics = ['Không có - Đúng 100%'];
+    }
+    return parsed;
   } catch (error) {
     let rec = `Học sinh ${studentName} làm đúng ${correctQuestions}/${totalQuestions} câu (${accuracyPercent}%).`;
     if (accuracyPercent === 100) {
-      rec = `Học sinh ${studentName} đạt kết quả tuyệt đối ${accuracyPercent}% trong thời gian ngắn. Kỹ năng làm bài rất tốt!`;
+      rec = `Học sinh ${studentName} đạt kết quả tuyệt đối ${accuracyPercent}%. Kỹ năng làm bài rất tốt!`;
     }
     return {
       accuracy_rate: `${accuracyPercent}%`,
       completion_speed: 'Tốt',
-      weak_topics: weakTopics.length > 0 ? weakTopics : ['Không có dạng toán yếu'],
+      weak_topics: weakTopics.length > 0 ? weakTopics : ['Không có - Đúng 100%'],
       recommendations: rec,
     };
   }
