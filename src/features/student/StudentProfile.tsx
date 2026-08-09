@@ -1,9 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { User, LogOut, ShieldCheck, School } from 'lucide-react';
 
 export const StudentProfile: React.FC = () => {
-  const { profile, user, signOut } = useAuth();
+  const { profile, user, signOut, refreshProfile } = useAuth();
+
+  useEffect(() => {
+    if (user && profile && profile.grade_level !== 2) {
+      supabase
+        .from('profiles')
+        .update({ grade_level: 2 })
+        .eq('id', user.id)
+        .then(() => {
+          if (refreshProfile) refreshProfile();
+        });
+    }
+  }, [user, profile]);
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
@@ -15,8 +28,8 @@ export const StudentProfile: React.FC = () => {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900 font-display">{profile?.full_name || 'Học sinh'}</h2>
           <p className="text-sm text-slate-500 font-mono mt-1">{profile?.email || user?.email}</p>
-          <span className="inline-block mt-3 bg-amber-100 text-amber-800 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-200 uppercase shadow-2xs">
-            HỌC SINH LỚP {profile?.grade_level || 2}
+          <span className="inline-block mt-3 bg-amber-100 text-amber-800 text-xs font-extrabold px-4 py-1.5 rounded-full border border-amber-200 uppercase shadow-2xs">
+            HỌC SINH LỚP 2
           </span>
         </div>
 
