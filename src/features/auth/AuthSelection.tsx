@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
 import { GraduationCap, School, ShieldCheck, LogIn, Sparkles, UserPlus, Mail, Lock, User as UserIcon } from 'lucide-react';
 
@@ -42,6 +43,13 @@ export const AuthSelection: React.FC = () => {
     try {
       setLoading(true);
       setErrorMessage(null);
+      if (!isSupabaseConfigured) {
+        setErrorMessage(
+          '⚠️ Lỗi chưa cấu hình Supabase trên Vercel! Thầy/Cô cần vào Vercel Settings -> Environment Variables -> Thêm 2 biến VITE_SUPABASE_URL và VITE_SUPABASE_ANON_KEY của dự án Supabase thực tế.'
+        );
+        setLoading(false);
+        return;
+      }
       await signInWithGoogle(selectedRole);
     } catch (err: any) {
       setErrorMessage(err?.message || 'Không thể đăng nhập bằng Google.');
