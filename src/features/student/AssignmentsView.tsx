@@ -162,6 +162,7 @@ export const AssignmentsView: React.FC = () => {
       questionDurationsRef.current[curId] = (questionDurationsRef.current[curId] || 0) + elapsed;
     }
     questionDurationsRef.current[`q_${curIdx}`] = (questionDurationsRef.current[`q_${curIdx}`] || 0) + elapsed;
+    questionDurationsRef.current[curIdx] = (questionDurationsRef.current[curIdx] || 0) + elapsed;
 
     setQuestionTimes({ ...questionDurationsRef.current });
 
