@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
@@ -21,8 +21,34 @@ export const AuthSelection: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Ensure remembered email & password are explicitly saved in localStorage at all times
+  useEffect(() => {
+    if (rememberMe) {
+      if (!localStorage.getItem(REMEMBERED_EMAIL_KEY)) {
+        localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      }
+      if (!localStorage.getItem(REMEMBERED_PASSWORD_KEY)) {
+        localStorage.setItem(REMEMBERED_PASSWORD_KEY, password);
+      }
+    }
+  }, [rememberMe, email, password]);
+
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
+  };
+
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    if (rememberMe) {
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, val.trim());
+    }
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    if (rememberMe) {
+      localStorage.setItem(REMEMBERED_PASSWORD_KEY, val);
+    }
   };
 
   const handleSubmitEmail = async (e?: React.FormEvent) => {
@@ -31,7 +57,6 @@ export const AuthSelection: React.FC = () => {
     setErrorMessage(null);
     setLoading(true);
 
-    // Save remembered credentials if checked
     if (rememberMe) {
       localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
       localStorage.setItem(REMEMBERED_PASSWORD_KEY, password);
@@ -43,7 +68,7 @@ export const AuthSelection: React.FC = () => {
     try {
       if (authMode === 'login') {
         setSuccessMessage('✅ Đăng nhập thành công! Đang đưa bạn vào hệ thống...');
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 300));
         try {
           await signInWithEmail(email, password);
         } catch (err: any) {
@@ -53,7 +78,7 @@ export const AuthSelection: React.FC = () => {
         }
       } else {
         setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang đưa bạn vào hệ thống...');
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 400));
         try {
           await signUpWithEmail(email, password, fullName, selectedRole);
           await signInWithEmail(email, password);
@@ -81,7 +106,7 @@ export const AuthSelection: React.FC = () => {
         await signInWithGoogle(selectedRole);
       } else {
         setSuccessMessage('✅ Đăng nhập thành công với Tài Khoản Google!');
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 300));
         await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, email || 'ngocngan091002@gmail.com');
       }
     } catch (err: any) {
@@ -161,7 +186,7 @@ export const AuthSelection: React.FC = () => {
                   </div>
                 </div>
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                  ✓ Đã Lưu Mật Khẩu
+                  ✓ Đã Tự Nhớ Mật Khẩu
                 </span>
               </div>
 
@@ -214,7 +239,7 @@ export const AuthSelection: React.FC = () => {
           )}
 
           {/* Form Email + Password */}
-          <form onSubmit={handleSubmitEmail} name="loginForm" autoComplete="on" className="space-y-4">
+          <form onSubmit={handleSubmitEmail} id="loginForm" method="post" action="#" name="loginForm" autoComplete="on" className="space-y-4">
             {authMode === 'register' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Họ và tên:</label>
@@ -240,12 +265,12 @@ export const AuthSelection: React.FC = () => {
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
-                  id="email"
-                  name="email"
+                  id="username"
+                  name="username"
                   type="email"
                   autoComplete="username email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => handleEmailChange(e.target.value)}
                   placeholder="ngocngan091002@gmail.com"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium"
                   required
@@ -263,7 +288,7 @@ export const AuthSelection: React.FC = () => {
                   type="password"
                   autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => handlePasswordChange(e.target.value)}
                   placeholder="••••••••"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium"
                   required
@@ -277,12 +302,22 @@ export const AuthSelection: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setRememberMe(checked);
+                    if (checked) {
+                      localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+                      localStorage.setItem(REMEMBERED_PASSWORD_KEY, password);
+                    } else {
+                      localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+                      localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
+                    }
+                  }}
                   className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                 />
                 <span className="flex items-center gap-1">
                   <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Ghi nhớ mật khẩu & tự điền lần sau</span>
+                  <span>Luôn tự động ghi nhớ mật khẩu & điền sẵn</span>
                 </span>
               </label>
             </div>
