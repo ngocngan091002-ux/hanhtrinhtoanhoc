@@ -140,6 +140,8 @@ export interface StudentAnalytics {
   student_id: string;
   weak_topics: string[];
   recommendations: string;
+  accuracy_rate?: string;
+  completion_speed?: string;
   updated_at: string;
 }
 

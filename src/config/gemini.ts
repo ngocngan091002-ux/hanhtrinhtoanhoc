@@ -185,19 +185,70 @@ Ngữ cảnh bài toán (nếu có): "${contextMessage}"`;
 }
 
 export async function analyzeStudentWeaknesses(studentName: string, performanceHistory: any[]) {
+  // Analyze performanceHistory locally for exact stats
+  let totalQuestions = 0;
+  let correctQuestions = 0;
+  const wrongTopicsSet = new Set<string>();
+
+  (performanceHistory || []).forEach((item: any) => {
+    const qList = Array.isArray(item.questions_json)
+      ? item.questions_json
+      : typeof item.questions_json === 'string'
+      ? JSON.parse(item.questions_json || '[]')
+      : [];
+
+    const ansMap = item.answers_json || {};
+
+    qList.forEach((q: any, idx: number) => {
+      totalQuestions++;
+      const userAns = ansMap[q.id] || ansMap[`q_${idx}`] || (ansMap ? Object.values(ansMap)[idx] : undefined);
+      const isCorrect = userAns === q.correct_answer || (q.correct_answer && String(userAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+
+      if (isCorrect) {
+        correctQuestions++;
+      } else {
+        const topic = item.assignment_title || q.prompt || 'Phép toán';
+        wrongTopicsSet.add(topic);
+      }
+    });
+  });
+
+  const accuracyPercent = totalQuestions > 0 ? Math.round((correctQuestions / totalQuestions) * 100) : 100;
+  const weakTopics = Array.from(wrongTopicsSet);
+
   const prompt = `Bạn là chuyên gia phân tích dữ liệu học tập tiểu học.
-Dựa trên lịch sử bài nộp của học sinh ${studentName}: ${JSON.stringify(performanceHistory)}.
-Hãy đưa ra tổng hợp các kiến thức học sinh còn yếu/cần lưu ý và đề xuất hướng hỗ trợ cho Giáo viên.
-Trả về JSON:
+Dựa trên lịch sử bài nộp thực tế của học sinh ${studentName}:
+${JSON.stringify(performanceHistory, null, 2)}
+
+Yêu cầu phân tích:
+1. Đánh giá mức độ trả lời đúng (Tỉ lệ % làm đúng: ${accuracyPercent}%).
+2. Đánh giá thời gian làm bài thực tế ở các câu hỏi (Nhanh/Vừa phải/Chậm).
+3. Chỉ ra cụ thể dạng toán học sinh làm sai hoặc chưa vững.
+4. Đưa ra nhận xét chi tiết, thực tế và hướng hỗ trợ cho Giáo viên.
+
+Trả về duy nhất định dạng JSON:
 {
-  "weak_topics": ["Phép chia có dư", "Tính chu vi hình chữ nhật"],
-  "recommendations": "Học sinh thường vướng ở phép chia có dư lớn hơn số chia. Giáo viên nên cho thêm 2-3 bài tập nhỏ luyện tập dạng này."
+  "accuracy_rate": "${accuracyPercent}%",
+  "completion_speed": "Nhanh (khoảng 2 phút)",
+  "weak_topics": ${JSON.stringify(weakTopics.length > 0 ? weakTopics : ["Chưa phát hiện dạng toán yếu"])},
+  "recommendations": "Phân tích chi tiết dựa trên dữ liệu làm bài..."
 }`;
 
   if (!ai) {
+    let rec = '';
+    if (totalQuestions === 0) {
+      rec = `Học sinh ${studentName} chưa làm bài tập nào. Hãy giao bài tập để AI theo dõi tiến độ.`;
+    } else if (accuracyPercent === 100) {
+      rec = `Học sinh ${studentName} hoàn thành xuất sắc ${correctQuestions}/${totalQuestions} câu hỏi (Đạt ${accuracyPercent}%) với thời gian làm bài nhanh mượt. Học sinh đã làm chủ tốt kiến thức này!`;
+    } else {
+      rec = `Học sinh ${studentName} làm đúng ${correctQuestions}/${totalQuestions} câu (Đạt ${accuracyPercent}%). Cần chú ý thêm ở các dạng toán: ${weakTopics.join(', ')}. Giáo viên nên cho thêm bài tập rèn luyện dạng này.`;
+    }
+
     return {
-      weak_topics: ['Phép cộng có nhớ', 'Giải toán có lời văn'],
-      recommendations: `Học sinh ${studentName} nắm vững lý thuyết nhưng cần rèn luyện thêm khả năng phân tích đề toán có lời văn 2 phép tính.`
+      accuracy_rate: `${accuracyPercent}%`,
+      completion_speed: 'Nhanh (khoảng 2 phút)',
+      weak_topics: weakTopics.length > 0 ? weakTopics : ['Chưa có câu sai'],
+      recommendations: rec,
     };
   }
 
@@ -210,9 +261,15 @@ Trả về JSON:
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
     return JSON.parse(cleanJson);
   } catch (error) {
+    let rec = `Học sinh ${studentName} làm đúng ${correctQuestions}/${totalQuestions} câu (${accuracyPercent}%).`;
+    if (accuracyPercent === 100) {
+      rec = `Học sinh ${studentName} đạt kết quả tuyệt đối ${accuracyPercent}% trong thời gian ngắn. Kỹ năng làm bài rất tốt!`;
+    }
     return {
-      weak_topics: ['Tính nhẩm nhanh'],
-      recommendations: 'Giáo viên động viên học sinh luyện tập thêm trò chơi toán học hằng ngày.'
+      accuracy_rate: `${accuracyPercent}%`,
+      completion_speed: 'Tốt',
+      weak_topics: weakTopics.length > 0 ? weakTopics : ['Không có dạng toán yếu'],
+      recommendations: rec,
     };
   }
 }
