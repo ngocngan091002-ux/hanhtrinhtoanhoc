@@ -7,6 +7,29 @@ import { TeacherDashboard } from './features/teacher/TeacherDashboard';
 import { StudentDashboard } from './features/student/StudentDashboard';
 import { Navbar } from './components/layout/Navbar';
 
+const LoginRoute: React.FC = () => {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm font-bold text-slate-600">Đang kiểm tra quyền truy cập hệ thống...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user && profile) {
+    if (profile.role === 'admin') return <Navigate to="/admin" replace />;
+    if (profile.role === 'teacher') return <Navigate to="/teacher" replace />;
+    return <Navigate to="/student" replace />;
+  }
+
+  return <AuthSelection />;
+};
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({
   children,
   allowedRoles,
@@ -74,7 +97,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<AuthSelection />} />
+          <Route path="/login" element={<LoginRoute />} />
 
           <Route
             path="/admin/*"
