@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { Assignment, Submission, Question } from '../../types';
-import { BookOpenCheck, Clock, CheckCircle2, Send, HelpCircle, Eye, MessageSquare, Award, X } from 'lucide-react';
+import { triggerConfetti } from '../../utils/confetti';
+import { BookOpenCheck, Clock, CheckCircle2, Send, HelpCircle, Eye, MessageSquare, Award, X, Rocket, Sparkles } from 'lucide-react';
 
 const LOCAL_ASSIGNMENTS_KEY = 'hanhtrinhtoanhoc_local_assignments';
 const LOCAL_SUBMISSIONS_KEY = 'hanhtrinhtoanhoc_local_submissions';
@@ -212,6 +213,9 @@ export const AssignmentsView: React.FC = () => {
       // Async DB error handled silently
     }
 
+    // Trigger Fireworks Confetti effect for celebratory visual feedback
+    triggerConfetti();
+
     setSubmitting(false);
     setActiveAssignment(null);
     fetchAssignments();
@@ -290,10 +294,10 @@ export const AssignmentsView: React.FC = () => {
           <button
             onClick={handleSubmitQuiz}
             disabled={submitting}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-2xl shadow-lg transition-all text-base flex items-center space-x-2"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-8 py-3.5 rounded-2xl shadow-lg hover:shadow-xl transition-all text-base flex items-center space-x-2 active:scale-95 cursor-pointer"
           >
-            <Send className="w-5 h-5" />
-            <span>{submitting ? 'Đang Nộp Bài...' : 'NỘP BÀI TẬP'}</span>
+            <Rocket className="w-5 h-5 text-amber-300" />
+            <span>{submitting ? 'Đang Gửi Chiến Tích...' : '🚀 GỬI CHIẾN TÍCH BÀI LÀM'}</span>
           </button>
         </div>
       </div>

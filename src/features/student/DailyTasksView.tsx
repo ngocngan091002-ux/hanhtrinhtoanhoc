@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { DailyTask, DailyTaskItem } from '../../types';
-import { CalendarCheck, CheckCircle, AlertCircle, Sparkles, CheckSquare, Square } from 'lucide-react';
+import { triggerConfetti } from '../../utils/confetti';
+import { CalendarCheck, CheckCircle, AlertCircle, Sparkles, CheckSquare, Square, Trophy } from 'lucide-react';
 
 export const DailyTasksView: React.FC = () => {
   const { user } = useAuth();
@@ -84,6 +85,8 @@ export const DailyTasksView: React.FC = () => {
           });
 
         setCompletions((prev) => ({ ...prev, [itemId]: true }));
+        // Trigger celebratory fireworks confetti for visual feedback!
+        triggerConfetti();
       }
     } catch (err: any) {
       console.error('Error toggling completion:', err);
@@ -99,7 +102,7 @@ export const DailyTasksView: React.FC = () => {
             <span>📚 Nhiệm Vụ Hôm Nay</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Mỗi nhiệm vụ hoàn thành sẽ giúp bạn rèn luyện tư duy toán học vững chắc!
+            Mỗi thử thách chinh phục thành công sẽ cộng thêm <strong>+20 XP Kinh Nghiệm</strong>!
           </p>
         </div>
 
@@ -140,14 +143,14 @@ export const DailyTasksView: React.FC = () => {
                         className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                           isDone
                             ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950 font-semibold'
-                            : 'bg-rose-50/80 border-rose-200 text-rose-950 hover:bg-rose-100/60'
+                            : 'bg-amber-50/80 border-amber-200 text-amber-950 hover:bg-amber-100/60'
                         }`}
                       >
                         <div className="flex items-center space-x-3">
                           {isDone ? (
                             <CheckSquare className="w-6 h-6 text-emerald-600 shrink-0" />
                           ) : (
-                            <Square className="w-6 h-6 text-rose-500 shrink-0" />
+                            <Square className="w-6 h-6 text-amber-500 shrink-0" />
                           )}
                           <span className={isDone ? 'line-through opacity-80' : 'font-bold'}>
                             {item.title}
@@ -156,12 +159,12 @@ export const DailyTasksView: React.FC = () => {
 
                         <div>
                           {isDone ? (
-                            <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
-                              ✓ Đã hoàn thành
+                            <span className="bg-emerald-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-xs flex items-center gap-1">
+                              <Trophy className="w-3.5 h-3.5" /> <span>CHINH PHỤC</span>
                             </span>
                           ) : (
-                            <span className="bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
-                              Chưa hoàn thành
+                            <span className="bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+                              Chưa chinh phục
                             </span>
                           )}
                         </div>
