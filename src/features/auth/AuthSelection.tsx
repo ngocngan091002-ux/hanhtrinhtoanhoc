@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
-import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
+
+const REMEMBERED_EMAIL_KEY = 'hanhtrinhtoanhoc_remembered_email';
+const REMEMBERED_PASSWORD_KEY = 'hanhtrinhtoanhoc_remembered_password';
 
 export const AuthSelection: React.FC = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, loginAsGuest, selectedRole, setSelectedRole } = useAuth();
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  
+  // Pre-fill email and password from remembered storage or defaults
+  const [email, setEmail] = useState(() => localStorage.getItem(REMEMBERED_EMAIL_KEY) || 'ngocngan091002@gmail.com');
+  const [password, setPassword] = useState(() => localStorage.getItem(REMEMBERED_PASSWORD_KEY) || 'Ngan@119411');
+  const [rememberMe, setRememberMe] = useState(true);
+
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -23,6 +30,15 @@ export const AuthSelection: React.FC = () => {
     setSuccessMessage(null);
     setErrorMessage(null);
     setLoading(true);
+
+    // Save remembered credentials if checked
+    if (rememberMe) {
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
+      localStorage.setItem(REMEMBERED_PASSWORD_KEY, password);
+    } else {
+      localStorage.removeItem(REMEMBERED_EMAIL_KEY);
+      localStorage.removeItem(REMEMBERED_PASSWORD_KEY);
+    }
 
     try {
       if (authMode === 'login') {
@@ -64,14 +80,13 @@ export const AuthSelection: React.FC = () => {
         setSuccessMessage('🌐 Đang chuyển hướng sang trang xác thực tài khoản Google chính thức...');
         await signInWithGoogle(selectedRole);
       } else {
-        // Fallback for offline demo mode when Supabase env variables are unconfigured
         setSuccessMessage('✅ Đăng nhập thành công với Tài Khoản Google!');
         await new Promise((resolve) => setTimeout(resolve, 500));
-        await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, 'ngocngan091002@gmail.com');
+        await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, email || 'ngocngan091002@gmail.com');
       }
     } catch (err: any) {
       setSuccessMessage(null);
-      setErrorMessage(`❌ Đăng nhập Google không thành công hoặc đã bị hủy: ${err.message || 'Vui lòng chọn lại tài khoản Google!'}`);
+      setErrorMessage(`❌ Đăng nhập Google không thành công: ${err.message || 'Vui lòng chọn lại tài khoản Google!'}`);
       setLoading(false);
     }
   };
@@ -169,14 +184,17 @@ export const AuthSelection: React.FC = () => {
           )}
 
           {/* Form Email + Password */}
-          <form onSubmit={handleSubmitEmail} className="space-y-4">
+          <form onSubmit={handleSubmitEmail} name="loginForm" autoComplete="on" className="space-y-4">
             {authMode === 'register' && (
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Họ và tên:</label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                   <input
+                    id="fullName"
+                    name="fullName"
                     type="text"
+                    autoComplete="name"
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Nhập họ và tên đầy đủ..."
@@ -192,11 +210,14 @@ export const AuthSelection: React.FC = () => {
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
+                  id="email"
+                  name="email"
                   type="email"
+                  autoComplete="username email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nhap-email@domain.com"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  placeholder="ngocngan091002@gmail.com"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium"
                   required
                 />
               </div>
@@ -207,14 +228,33 @@ export const AuthSelection: React.FC = () => {
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
+                  id="password"
+                  name="password"
                   type="password"
+                  autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-medium"
                   required
                 />
               </div>
+            </div>
+
+            {/* Remember Me Checkbox & Browser Autofill Encouragement */}
+            <div className="flex items-center justify-between text-xs pt-1">
+              <label className="flex items-center space-x-2 cursor-pointer select-none text-slate-700 font-bold">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <span className="flex items-center gap-1">
+                  <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Ghi nhớ mật khẩu & tự điền lần sau</span>
+                </span>
+              </label>
             </div>
 
             <button
