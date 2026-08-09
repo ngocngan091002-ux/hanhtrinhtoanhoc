@@ -156,7 +156,7 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ví dụ: Game Wordwall Phép Nhân Lớp 3"
+                placeholder="Ví dụ: Game Wordwall Phép Nhân Lớp 2"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
                 required
               />

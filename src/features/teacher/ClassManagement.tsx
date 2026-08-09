@@ -439,7 +439,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                   type="text"
                   value={className}
                   onChange={(e) => setClassName(e.target.value)}
-                  placeholder="Ví dụ: Lớp 3A1 - Toán Học Tương Tác"
+                  placeholder="Ví dụ: Lớp 2A1 - Toán Học Tương Tác"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
                   required
                 />
@@ -451,7 +451,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                   type="text"
                   value={classDescription}
                   onChange={(e) => setClassDescription(e.target.value)}
-                  placeholder="Môn Toán Khối 3"
+                  placeholder="Môn Toán Khối 2"
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
                 />
               </div>

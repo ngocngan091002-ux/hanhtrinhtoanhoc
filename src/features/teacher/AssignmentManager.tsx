@@ -146,7 +146,7 @@ export const AssignmentManager: React.FC<AssignmentManagerProps> = ({ currentCla
     if (!aiTopic.trim()) return alert('Vui lòng nhập chủ đề toán học cần AI gợi ý (vd: Phép chia có dư, Chu vi hình chữ nhật...)');
     setIsGeneratingAI(true);
     try {
-      const generated = await generateAIQuestions(aiTopic, currentClass?.grade || 3, 4);
+      const generated = await generateAIQuestions(aiTopic, currentClass?.grade || 2, 4);
       setQuestions([...questions, ...generated]);
     } catch (err: any) {
       alert('Không thể tạo câu hỏi AI: ' + err.message);

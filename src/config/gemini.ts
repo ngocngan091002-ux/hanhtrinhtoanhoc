@@ -79,7 +79,7 @@ function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: 
   }));
 }
 
-export async function generateAIQuestions(topic: string, grade: number = 3, count: number = 5) {
+export async function generateAIQuestions(topic: string, grade: number = 2, count: number = 5) {
   const prompt = `Bạn là chuyên gia soạn thảo đề thi toán tiểu học Việt Nam cấp Lớp ${grade}. 
 YÊU CẦU BẮT BUỘC:
 1. Tạo danh sách ${count} câu hỏi trắc nghiệm toán tiểu học thuộc chính xác chủ đề: "${topic}".
