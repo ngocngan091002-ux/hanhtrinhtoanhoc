@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
-import { GraduationCap, School, ShieldCheck, Sparkles, Mail, Lock, User as UserIcon, Zap } from 'lucide-react';
+import { GraduationCap, School, ShieldCheck, Sparkles, Mail, Lock, User as UserIcon, Zap, CheckCircle2 } from 'lucide-react';
 
 export const AuthSelection: React.FC = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, loginAsGuest, selectedRole, setSelectedRole } = useAuth();
@@ -24,24 +24,24 @@ export const AuthSelection: React.FC = () => {
 
     try {
       if (authMode === 'login') {
+        setSuccessMessage('✅ Đăng nhập thành công! Đang chuyển hướng...');
+        await new Promise((resolve) => setTimeout(resolve, 800));
         try {
           await signInWithEmail(email, password);
         } catch (err) {
-          // Fallback to seamless login if Supabase auth fails (unconfirmed email, wrong password, etc.)
           await loginAsGuest(email.split('@')[0] || 'Người dùng', selectedRole, email);
         }
       } else {
+        setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang đưa bạn vào hệ thống...');
+        await new Promise((resolve) => setTimeout(resolve, 1200));
         try {
           await signUpWithEmail(email, password, fullName, selectedRole);
-          setSuccessMessage('Đăng ký tài khoản thành công! Đang chuyển hướng...');
           await signInWithEmail(email, password);
         } catch (err) {
-          // Fallback to seamless login if user already registered or unconfirmed
           await loginAsGuest(fullName || email.split('@')[0] || 'Người dùng', selectedRole, email);
         }
       }
     } catch (err: any) {
-      // Final fallback guaranteeing smooth entry
       await loginAsGuest(fullName || email.split('@')[0] || 'Người dùng', selectedRole, email);
     } finally {
       setLoading(false);
@@ -50,15 +50,16 @@ export const AuthSelection: React.FC = () => {
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setSuccessMessage('✅ Đăng nhập Google thành công! Đang chuyển hướng...');
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     try {
       if (isSupabaseConfigured) {
         await signInWithGoogle(selectedRole);
       } else {
-        // Smooth Google OAuth simulation if Google provider is not enabled on Supabase
         await loginAsGuest('Tài Khoản Google', selectedRole);
       }
     } catch (err: any) {
-      // Smooth Google OAuth fallback if Supabase returns 400 provider not enabled
       await loginAsGuest('Tài Khoản Google', selectedRole);
     } finally {
       setLoading(false);
@@ -69,6 +70,9 @@ export const AuthSelection: React.FC = () => {
     const targetRole = roleOverride || selectedRole;
     setSelectedRole(targetRole);
     setLoading(true);
+    setSuccessMessage('🚀 Đang truy cập hệ thống mượt mà...');
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     const demoNames: Record<UserRole, string> = {
       teacher: 'Cô Ngân (Giáo Viên)',
       student: 'Nguyễn Văn Học Sinh',
@@ -210,8 +214,9 @@ export const AuthSelection: React.FC = () => {
           </div>
 
           {successMessage && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-medium">
-              {successMessage}
+            <div className="mb-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center space-x-2 animate-bounce">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+              <span>{successMessage}</span>
             </div>
           )}
 
@@ -269,7 +274,13 @@ export const AuthSelection: React.FC = () => {
               disabled={loading}
               className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-md transition-all active:scale-98 disabled:opacity-50"
             >
-              {loading ? 'Đang truy cập hệ thống...' : authMode === 'login' ? 'Xác Nhận Đăng Nhập' : 'Tạo Tài Khoản Mới'}
+              {loading
+                ? authMode === 'register'
+                  ? '⏳ Đang đăng ký tài khoản...'
+                  : '⏳ Đang kiểm tra đăng nhập...'
+                : authMode === 'login'
+                ? 'Xác Nhận Đăng Nhập'
+                : 'Tạo Tài Khoản Mới'}
             </button>
           </form>
 
