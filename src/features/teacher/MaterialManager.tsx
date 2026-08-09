@@ -21,8 +21,8 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
   const [fileUrlInput, setFileUrlInput] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [subject, setSubject] = useState('Toán Học');
-  const [gradeLevel, setGradeLevel] = useState(3);
-  const [tagsInput, setTagsInput] = useState('toán3, luyentap');
+  const [gradeLevel, setGradeLevel] = useState(2);
+  const [tagsInput, setTagsInput] = useState('toán2, luyentap');
   const [isPublic, setIsPublic] = useState(false);
 
   // Assignment Modal

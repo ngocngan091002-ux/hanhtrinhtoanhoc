@@ -15,8 +15,8 @@ export const StudentProfile: React.FC = () => {
         <div>
           <h2 className="text-2xl font-extrabold text-slate-900 font-display">{profile?.full_name || 'Học sinh'}</h2>
           <p className="text-sm text-slate-500 font-mono mt-1">{profile?.email || user?.email}</p>
-          <span className="inline-block mt-3 bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full border border-amber-200 uppercase">
-            Học Sinh Lớp {profile?.grade_level || 3}
+          <span className="inline-block mt-3 bg-amber-100 text-amber-800 text-xs font-bold px-3.5 py-1.5 rounded-full border border-amber-200 uppercase shadow-2xs">
+            HỌC SINH LỚP {profile?.grade_level || 2}
           </span>
         </div>
 

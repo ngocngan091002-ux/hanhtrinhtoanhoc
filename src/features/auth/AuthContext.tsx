@@ -107,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: currentUser?.email || '',
           full_name: meta.full_name || meta.name || currentUser?.email?.split('@')[0] || 'Người dùng Google',
           role: metaRole,
+          grade_level: 2,
           avatar_url: meta.avatar_url || meta.picture || '',
           created_at: new Date().toISOString(),
         };
@@ -131,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             data.avatar_url = googleAvatar;
           } catch (e) {}
         }
-        setProfile(data as UserProfile);
+        setProfile({ ...data, grade_level: data.grade_level || 2 } as UserProfile);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -193,6 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: email,
       full_name: fullName || (role === 'teacher' ? 'Giáo Viên' : role === 'admin' ? 'Quản Trị Viên' : 'Học Sinh'),
       role: role,
+      grade_level: 2,
       created_at: new Date().toISOString(),
     };
 
