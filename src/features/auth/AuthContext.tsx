@@ -13,12 +13,23 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   signUpWithEmail: (email: string, pass: string, fullName: string, role: UserRole) => Promise<void>;
   signInWithGoogle: (role: UserRole) => Promise<void>;
-  loginAsGuest: (fullName: string, role: UserRole, email?: string) => Promise<void>;
+  loginAsGuest: (fullName: string, role: UserRole, customEmail?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
 const LOCAL_STORAGE_KEY = 'hanhtrinhtoanhoc_guest_session';
+
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -157,7 +168,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginAsGuest = async (fullName: string, role: UserRole, customEmail?: string) => {
-    const guestId = 'usr_' + Math.random().toString(36).substring(2, 10);
+    const guestId = generateUUID();
     const email = customEmail || `${role}_${Math.floor(Math.random() * 1000)}@hanhtrinhtoanhoc.edu.vn`;
 
     const guestProfile: UserProfile = {
