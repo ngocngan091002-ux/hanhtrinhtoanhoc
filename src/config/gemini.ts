@@ -3,36 +3,99 @@ import { GoogleGenAI } from '@google/genai';
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
+// Smart offline question generator matching topic strictly
+function generateDynamicTopicQuestions(topic: string, grade: number = 2, count: number = 5) {
+  const lowerTopic = topic.toLowerCase();
+
+  // 1. Phép cộng phạm vi 20 (Grade 1 & 2)
+  if (lowerTopic.includes('cộng') && (lowerTopic.includes('20') || lowerTopic.includes('lớp 1') || lowerTopic.includes('lớp 2'))) {
+    const pool = [
+      { prompt: 'Phép tính 8 + 7 có kết quả bằng bao nhiêu?', options: ['15', '14', '16', '13'], correct: '15', exp: '8 + 7 = 15. Con tính nhẩm tách số rất tốt!' },
+      { prompt: 'Tính: 9 + 6 = ?', options: ['15', '14', '16', '17'], correct: '15', exp: '9 + 6 = 15. Tích cực phát huy nhé!' },
+      { prompt: 'Điền số thích hợp vào chỗ chấm: 12 + 5 = ...', options: ['17', '16', '18', '19'], correct: '17', exp: '12 + 5 = 17. Con làm bài rất xuất sắc!' },
+      { prompt: 'Tính nhẩm: 7 + 8 = ?', options: ['15', '16', '14', '13'], correct: '15', exp: '7 + 8 = 15. Phép tính hoán vị đúng 100%!' },
+      { prompt: 'Tính: 11 + 6 = ?', options: ['17', '18', '16', '19'], correct: '17', exp: '11 + 6 = 17. Rất đáng khen ngợi!' },
+    ];
+    return pool.slice(0, count).map((item, idx) => ({
+      id: `q_${idx + 1}`,
+      prompt: item.prompt,
+      options: item.options,
+      correct_answer: item.correct,
+      explanation: item.exp,
+    }));
+  }
+
+  // 2. Phép trừ phạm vi 20
+  if (lowerTopic.includes('trừ') && (lowerTopic.includes('20') || lowerTopic.includes('lớp 1') || lowerTopic.includes('lớp 2'))) {
+    const pool = [
+      { prompt: 'Phép tính 15 - 7 có kết quả bằng bao nhiêu?', options: ['8', '7', '9', '6'], correct: '8', exp: '15 - 7 = 8. Đúng rồi con nhé!' },
+      { prompt: 'Tính: 18 - 9 = ?', options: ['9', '8', '10', '7'], correct: '9', exp: '18 - 9 = 9. Phép trừ nhớ rất chuẩn!' },
+      { prompt: 'Điền số thích hợp: 14 - 6 = ...', options: ['8', '7', '9', '6'], correct: '8', exp: '14 - 6 = 8. Con làm bài rất giỏi!' },
+      { prompt: 'Tính nhẩm: 13 - 5 = ?', options: ['8', '7', '9', '6'], correct: '8', exp: '13 - 5 = 8. Rất nhanh và chính xác!' },
+      { prompt: 'Tính: 16 - 8 = ?', options: ['8', '7', '9', '6'], correct: '8', exp: '16 - 8 = 8. Tuyệt vời!' },
+    ];
+    return pool.slice(0, count).map((item, idx) => ({
+      id: `q_${idx + 1}`,
+      prompt: item.prompt,
+      options: item.options,
+      correct_answer: item.correct,
+      explanation: item.exp,
+    }));
+  }
+
+  // 3. Phép nhân / Bảng nhân
+  if (lowerTopic.includes('nhân') || lowerTopic.includes('bảng nhân')) {
+    const pool = [
+      { prompt: 'Phép tính 5 x 7 có kết quả bằng bao nhiêu?', options: ['35', '30', '40', '25'], correct: '35', exp: '5 x 7 = 35. Con thuộc bảng nhân 5 rất chuẩn!' },
+      { prompt: 'Tính: 4 x 8 = ?', options: ['32', '28', '36', '30'], correct: '32', exp: '4 x 8 = 32. Tính nhẩm chính xác!' },
+      { prompt: 'Điền số thích hợp: 3 x 9 = ...', options: ['27', '24', '30', '21'], correct: '27', exp: '3 x 9 = 27. Xuất sắc!' },
+      { prompt: 'Tính: 2 x 9 = ?', options: ['18', '16', '20', '14'], correct: '18', exp: '2 x 9 = 18. Rất tốt!' },
+      { prompt: 'Mỗi chiếc xe có 4 bánh. Hỏi 6 chiếc xe có tất cả bao nhiêu bánh xe?', options: ['24 bánh', '20 bánh', '28 bánh', '22 bánh'], correct: '24 bánh', exp: '4 x 6 = 24 bánh xe. Giải toán lời văn xuất sắc!' },
+    ];
+    return pool.slice(0, count).map((item, idx) => ({
+      id: `q_${idx + 1}`,
+      prompt: item.prompt,
+      options: item.options,
+      correct_answer: item.correct,
+      explanation: item.exp,
+    }));
+  }
+
+  // 4. Default fallback matching grade level
+  const genericPool = [
+    { prompt: `Phép tính 14 + 5 có kết quả bằng bao nhiêu?`, options: ['19', '18', '20', '17'], correct: '19', exp: '14 + 5 = 19. Con làm toán rất giỏi!' },
+    { prompt: `Tính: 20 - 8 = ?`, options: ['12', '11', '13', '14'], correct: '12', exp: '20 - 8 = 12. Phép tính chuẩn xác!' },
+    { prompt: `Số lớn nhất có một chữ số cộng với 5 bằng bao nhiêu?`, options: ['14', '13', '15', '12'], correct: '14', exp: 'Số lớn nhất có 1 chữ số là 9. Ta có 9 + 5 = 14. Rất thông minh!' },
+    { prompt: `Điền số thích hợp vào chỗ chấm: 7 + ... = 15`, options: ['8', '7', '9', '6'], correct: '8', exp: '15 - 7 = 8. Tìm số hạng chưa biết rất giỏi!' },
+    { prompt: `Mẹ mua 9 quả cam, bố mua thêm 6 quả cam. Hỏi có tất cả bao nhiêu quả cam?`, options: ['15 quả', '14 quả', '16 quả', '13 quả'], correct: '15 quả', exp: '9 + 6 = 15 quả cam. Giải toán lời văn chính xác!' },
+  ];
+
+  return genericPool.slice(0, count).map((item, idx) => ({
+    id: `q_${idx + 1}`,
+    prompt: item.prompt,
+    options: item.options,
+    correct_answer: item.correct,
+    explanation: item.exp,
+  }));
+}
+
 export async function generateAIQuestions(topic: string, grade: number = 3, count: number = 5) {
-  const prompt = `Bạn là chuyên gia giáo dục toán tiểu học Lớp ${grade}. 
-Hãy tạo danh sách ${count} câu hỏi toán tiểu học thuộc chủ đề "${topic}".
-Trả về định dạng JSON thuần túy (Array of objects), mỗi object gồm:
+  const prompt = `Bạn là chuyên gia soạn thảo đề thi toán tiểu học Việt Nam cấp Lớp ${grade}. 
+YÊU CẦU BẮT BUỘC:
+1. Tạo danh sách ${count} câu hỏi trắc nghiệm toán tiểu học thuộc chính xác chủ đề: "${topic}".
+2. PHẢI ĐẢM BẢO độ khó và giới hạn số tính toán NẰM ĐÚNG PHẠM VI "${topic}". 
+   Ví dụ: Nếu chủ đề ghi "phạm vi 20" thì tất cả các số và kết quả PHẢI nhỏ hơn hoặc bằng 20 (tuyệt đối không cho số hàng trăm hay chu vi hình phức tạp).
+3. Trả về định dạng JSON thuần túy (Array of objects), mỗi object gồm:
 - id: chuỗi ngẫu nhiên (q1, q2...)
-- prompt: nội dung câu hỏi ngắn gọn, phù hợp học sinh tiểu học
+- prompt: nội dung câu hỏi ngắn gọn, vui tươi, chuẩn kiến thức Lớp ${grade}
 - options: mảng 4 lựa chọn (A, B, C, D) dạng text
 - correct_answer: lựa chọn đúng (trùng khớp exact 1 trong các options)
-- explanation: giải thích ngắn gọn bằng giọng điệu vui vẻ, khen ngợi.
+- explanation: giải thích ngắn gọn bằng giọng điệu khen ngợi, động viên.
 
 CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG CÓ MARKDOWN HOẶC DẪN NHẬP.`;
 
   if (!ai) {
-    // Basic smart fallback if no API key present yet
-    return [
-      {
-        id: 'q1',
-        prompt: `Trong phép tính 345 + 218, kết quả bằng bao nhiêu?`,
-        options: ['563', '553', '564', '573'],
-        correct_answer: '563',
-        explanation: 'Thầy/Cô tuyên dương con! Phép cộng nhớ 1 ở hàng chục: 5+8=13 (viết 3 nhớ 1), 4+1+1=6, 3+2=5.'
-      },
-      {
-        id: 'q2',
-        prompt: `Một hình chữ nhật có chiều dài 8cm, chiều rộng 5cm. Chu vi hình chữ nhật đó là:`,
-        options: ['13 cm', '26 cm', '40 cm', '30 cm'],
-        correct_answer: '26 cm',
-        explanation: 'Công thức tính chu vi hình chữ nhật = (Chiều dài + Chiều rộng) x 2 = (8 + 5) x 2 = 26cm.'
-      }
-    ];
+    return generateDynamicTopicQuestions(topic, grade, count);
   }
 
   try {
@@ -42,18 +105,14 @@ CHỈ TRẢ VỀ JSON HỢP LỆ, KHÔNG CÓ MARKDOWN HOẶC DẪN NHẬP.`;
     });
     const text = response.text || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed;
+    }
+    return generateDynamicTopicQuestions(topic, grade, count);
   } catch (error) {
     console.error('Error generating AI questions:', error);
-    return [
-      {
-        id: 'q1',
-        prompt: `Tính: 125 x 4 = ?`,
-        options: ['400', '500', '600', '450'],
-        correct_answer: '500',
-        explanation: '125 x 4 = 500. Rất chính xác!'
-      }
-    ];
+    return generateDynamicTopicQuestions(topic, grade, count);
   }
 }
 
@@ -66,7 +125,7 @@ Hãy kiểm tra bài làm, đưa ra gợi ý chấm điểm từ 0.0 đến 10.0
 Trả về định dạng JSON:
 {
   "suggested_score": 9.0,
-  "suggested_feedback": "Con làm bài rất xuất sắc! Chỉ lưu ý chút ở câu tính chu vi nhé."
+  "suggested_feedback": "Con làm bài rất xuất sắc! Đã làm đúng hầu hết các câu."
 }
 CHỈ TRẢ VỀ JSON HỢP LỆ.`;
 
@@ -110,7 +169,7 @@ Hỏi của học sinh: "${question}"
 Ngữ cảnh bài toán (nếu có): "${contextMessage}"`;
 
   if (!ai) {
-    return `Chào bạn nhỏ! 👋 Thầy/Cô AI ở đây để hỗ trợ bạn nhé. Đối với bài toán "${question}", bạn thử nhớ lại công thức xem hàng đơn vị mình sẽ cộng trước hay cộng sau nhỉ? Bạn thử tính giúp mình nhé! 🌟`;
+    return `Chào bạn nhỏ! 👋 Thầy/Cô AI ở đây để hỗ trợ bạn nhé. Đối với bài toán "${question}", bạn thử nhớ lại quy tắc tính xem phép tính nào thực hiện trước nhỉ? Bạn thử tính giúp mình xem sao nhé! 🌟`;
   }
 
   try {
