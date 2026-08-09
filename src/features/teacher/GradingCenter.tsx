@@ -238,8 +238,13 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
   const handleSelectSubmission = (sub: Submission) => {
     setSelectedSubmission(sub);
     const autoResult = calculateExactSubmissionScore(sub);
-    setScore(sub.final_score ?? sub.ai_suggested_score ?? autoResult.score);
-    setFeedback(sub.final_feedback ?? sub.ai_suggested_feedback ?? autoResult.feedback);
+    if (sub.is_finalized && sub.final_score !== undefined) {
+      setScore(sub.final_score);
+      setFeedback(sub.final_feedback || autoResult.feedback);
+    } else {
+      setScore(autoResult.score);
+      setFeedback(autoResult.feedback);
+    }
   };
 
   const handleRequestAIGrading = async () => {
@@ -533,12 +538,16 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                           const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
 
                           const formatQuestionTime = (seconds?: number | string) => {
-                            if (!seconds) return '15 giây';
-                            const sec = typeof seconds === 'string' ? parseInt(seconds, 10) || 15 : seconds;
-                            if (sec < 60) return `${sec} giây`;
-                            const m = Math.floor(sec / 60);
-                            const s = sec % 60;
-                            return `${m} phút ${s > 0 ? s + 's' : ''}`;
+                            if (seconds !== undefined && seconds !== null && seconds !== '') {
+                              const sec = typeof seconds === 'string' ? parseInt(seconds, 10) : seconds;
+                              if (!isNaN(sec) && sec > 0) {
+                                if (sec < 60) return `${sec} giây`;
+                                const m = Math.floor(sec / 60);
+                                const s = sec % 60;
+                                return `${m} phút ${s > 0 ? s + 's' : ''}`;
+                              }
+                            }
+                            return 'Vừa làm';
                           };
 
                           return (

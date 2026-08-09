@@ -142,15 +142,21 @@ export const AssignmentsView: React.FC = () => {
     lastTimeRef.current = Date.now();
   };
 
-  const handleSelectOption = (questionId: string, option: string) => {
+  const handleSelectOption = (questionId: string, option: string, qIdx?: number) => {
     const now = Date.now();
     const elapsed = Math.max(1, Math.round((now - lastTimeRef.current) / 1000));
     lastTimeRef.current = now;
 
-    setQuestionTimes((prev) => ({
-      ...prev,
-      [questionId]: (prev[questionId] || 0) + elapsed,
-    }));
+    setQuestionTimes((prev) => {
+      const nextMap = {
+        ...prev,
+        [questionId]: (prev[questionId] || 0) + elapsed,
+      };
+      if (qIdx !== undefined) {
+        nextMap[`q_${qIdx}`] = (prev[`q_${qIdx}`] || 0) + elapsed;
+      }
+      return nextMap;
+    });
 
     setAnswers((prev) => ({
       ...prev,
@@ -234,7 +240,7 @@ export const AssignmentsView: React.FC = () => {
                     <button
                       key={optIdx}
                       type="button"
-                      onClick={() => handleSelectOption(q.id, opt)}
+                      onClick={() => handleSelectOption(q.id || `q_${qIdx}`, opt, qIdx)}
                       className={`p-3.5 rounded-xl border text-left font-bold text-sm transition-all ${
                         isSelected
                           ? 'border-sky-600 bg-sky-500 text-white shadow-md'
