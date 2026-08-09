@@ -234,7 +234,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
       // Async DB error handled silently
     }
 
-    alert('Đã CHỐT ĐIỂM và gửi kết quả về cho học sinh thành công!');
+    alert(`🎉 Đã CHỐT ${score} ĐIỂM và gửi kết quả về cho học sinh ${selectedSubmission.student_name} thành công!`);
   };
 
   return (
@@ -247,7 +247,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
             <span>Trung Tâm Chấm Bài & Chốt Điểm</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            AI gợi ý điểm + nhận xét $\rightarrow$ Giáo viên kiểm tra/sửa $\rightarrow$ Giáo viên **CHỐT** $\rightarrow$ Học sinh mới xem được.
+            AI gợi ý điểm + nhận xét $\rightarrow$ Giáo viên kiểm tra/sửa $\rightarrow$ Bấm **CHỐT KẾT QUẢ** $\rightarrow$ Điểm gửi trực tiếp tới Học sinh.
           </p>
         </div>
 
@@ -325,39 +325,76 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
           )}
         </div>
 
-        {/* Right Column: Grading Details & AI Suggestions */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        {/* Right Column: Prominent Top Grading Section & Answers Detail */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-6">
           {selectedSubmission ? (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+            <>
+              {/* Header Info */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-4 border-b border-slate-100 gap-3">
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{selectedSubmission.student_name}</h3>
                   <div className="text-xs text-slate-400 mt-0.5">
-                    Nộp bài lúc: {new Date(selectedSubmission.submitted_at).toLocaleString('vi-VN')}
+                    Thời gian nộp: {new Date(selectedSubmission.submitted_at).toLocaleString('vi-VN')}
                   </div>
                 </div>
 
                 <button
                   onClick={handleRequestAIGrading}
                   disabled={isGradingAI}
-                  className="bg-gradient-to-r from-amber-500 to-sky-600 hover:from-amber-600 hover:to-sky-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md transition-all flex items-center space-x-1.5"
+                  className="bg-gradient-to-r from-amber-500 to-sky-600 hover:from-amber-600 hover:to-sky-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all flex items-center space-x-1.5 shrink-0"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{isGradingAI ? 'AI Đang Phân Tích...' : 'AI Chấm Bài Tự Động'}</span>
+                  <span>{isGradingAI ? 'AI Đang Phân Tích...' : '✨ AI Chấm Bài Tự Động'}</span>
                 </button>
               </div>
 
-              {/* Student Answers View */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-bold text-slate-800">Chi Tiết Bài Làm Của Học Sinh:</h4>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
-                  {Object.entries(selectedSubmission.answers_json || {}).map(([qId, ans], idx) => (
-                    <div key={qId} className="flex justify-between items-center py-1 border-b border-slate-200/60 last:border-0">
-                      <span className="font-bold text-slate-700">Câu {idx + 1}:</span>
-                      <span className="font-mono text-sky-800 bg-white px-2 py-0.5 rounded border border-slate-200 font-bold">{ans}</span>
-                    </div>
-                  ))}
+              {/* 🟢 PROMINENT TOP TEACHER GRADING BOX */}
+              <div className="p-5 rounded-2xl bg-emerald-50/80 border-2 border-emerald-300 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-emerald-200/80 pb-2">
+                  <h4 className="text-sm font-extrabold text-emerald-950 flex items-center gap-1.5 uppercase font-display">
+                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    <span>Duyệt Điểm Số & Nhận Xét Cho Học Sinh</span>
+                  </h4>
+                  {selectedSubmission.is_finalized && (
+                    <span className="bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-xs">
+                      ✓ Đã Chốt Kết Quả ({selectedSubmission.final_score}đ)
+                    </span>
+                  )}
                 </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-900 mb-1 uppercase">Điểm số (0 - 10):</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      max="10"
+                      value={score}
+                      onChange={(e) => setScore(parseFloat(e.target.value) || 0)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-emerald-300 text-base font-extrabold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none text-emerald-900"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-emerald-900 mb-1 uppercase">Nhận xét của Giáo viên:</label>
+                    <input
+                      type="text"
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      placeholder="Con làm bài rất tốt, phát huy nhé!"
+                      className="w-full px-3 py-2.5 rounded-xl border border-emerald-300 text-sm font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleFinalizeGrading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-6 rounded-xl shadow-lg transition-all text-sm flex items-center justify-center space-x-2 active:scale-98"
+                >
+                  <CheckCircle className="w-5 h-5" />
+                  <span>CHỐT KẾT QUẢ & GỬI ĐIỂM CHO HỌC SINH</span>
+                </button>
               </div>
 
               {/* AI Suggestion Box */}
@@ -376,47 +413,19 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                 </div>
               )}
 
-              {/* Teacher Manual Edit Form */}
-              <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-bold text-slate-800">Chỉnh Sửa & Chốt Điểm (Giáo Viên):</h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Điểm số (0 - 10):</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      max="10"
-                      value={score}
-                      onChange={(e) => setScore(parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm font-bold focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Nhận xét của Giáo viên:</label>
-                    <input
-                      type="text"
-                      value={feedback}
-                      onChange={(e) => setFeedback(e.target.value)}
-                      placeholder="Con làm bài rất tốt, phát huy nhé!"
-                      className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    onClick={handleFinalizeGrading}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition-all text-sm flex items-center space-x-2"
-                  >
-                    <CheckCircle className="w-5 h-5" />
-                    <span>CHỐT KẾT QUẢ & GỬI CHO HỌC SINH</span>
-                  </button>
+              {/* Student Answers View */}
+              <div className="space-y-3 pt-2 border-t border-slate-100">
+                <h4 className="text-sm font-bold text-slate-800">Chi Tiết Bài Làm Của Học Sinh:</h4>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+                  {Object.entries(selectedSubmission.answers_json || {}).map(([qId, ans], idx) => (
+                    <div key={qId} className="flex justify-between items-center py-2 border-b border-slate-200/60 last:border-0">
+                      <span className="font-bold text-slate-700">Câu {idx + 1}:</span>
+                      <span className="font-mono text-sky-800 bg-white px-3 py-1 rounded-lg border border-slate-200 font-extrabold text-sm">{ans}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             <div className="py-16 text-center text-slate-400 text-sm">
               Vui lòng chọn 1 học sinh ở bảng bên trái để xem bài nộp và duyệt điểm.
