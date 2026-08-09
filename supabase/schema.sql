@@ -1,5 +1,5 @@
 -- ================================================================
--- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM (IDEMPOTENT)
+-- SYSTEM SCHEMA FOR EDTECH & LEARNING MANAGEMENT SYSTEM (IDEMPOTENT & BULLETPROOF)
 -- Stack: Supabase PostgreSQL + Auth + Storage + RLS
 -- Roles: admin, teacher, student
 -- ================================================================
@@ -102,22 +102,39 @@ CREATE INDEX IF NOT EXISTS idx_assignments_class ON public.assignments(class_id)
 CREATE INDEX IF NOT EXISTS idx_student_progress_student ON public.student_progress(student_id);
 
 -- ================================================================
--- AUTOMATIC PROFILE CREATION TRIGGER
+-- AUTOMATIC PROFILE CREATION TRIGGER (BULLETPROOF)
 -- ================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+    user_role_val public.user_role;
+    raw_role text;
 BEGIN
+    raw_role := LOWER(COALESCE(NEW.raw_user_meta_data->>'role', 'student'));
+    
+    IF raw_role = 'admin' THEN
+        user_role_val := 'admin'::public.user_role;
+    ELSIF raw_role = 'teacher' THEN
+        user_role_val := 'teacher'::public.user_role;
+    ELSE
+        user_role_val := 'student'::public.user_role;
+    END IF;
+
     INSERT INTO public.profiles (id, email, full_name, avatar_url, role)
     VALUES (
         NEW.id,
-        NEW.email,
-        COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1)),
+        COALESCE(NEW.email, ''),
+        COALESCE(NEW.raw_user_meta_data->>'full_name', SPLIT_PART(NEW.email, '@', 1), 'Người dùng'),
         COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
-        COALESCE((NEW.raw_user_meta_data->>'role')::user_role, 'student'::user_role)
+        user_role_val
     )
     ON CONFLICT (id) DO UPDATE SET
         full_name = EXCLUDED.full_name,
         avatar_url = EXCLUDED.avatar_url;
+        
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    -- Return NEW to ensure user registration in auth.users never fails
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -147,7 +164,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- ================================================================
--- ROW LEVEL SECURITY (RLS) POLICIES (With DROP IF EXISTS for idempotency)
+-- ROW LEVEL SECURITY (RLS) POLICIES
 -- ================================================================
 
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
@@ -162,7 +179,6 @@ DROP POLICY IF EXISTS "Read profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Profiles are readable by authenticated users" ON public.profiles;
 CREATE POLICY "Read profiles" ON public.profiles FOR SELECT TO authenticated USING (true);
 
-DROP POLICY IF EXISTS "Update own profile font" ON public.profiles;
 DROP POLICY IF EXISTS "Update own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Update own profile" ON public.profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
