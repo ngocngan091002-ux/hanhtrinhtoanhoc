@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
-import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound } from 'lucide-react';
+import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
 
 const REMEMBERED_EMAIL_KEY = 'hanhtrinhtoanhoc_remembered_email';
 const REMEMBERED_PASSWORD_KEY = 'hanhtrinhtoanhoc_remembered_password';
@@ -25,8 +25,8 @@ export const AuthSelection: React.FC = () => {
     setSelectedRole(role);
   };
 
-  const handleSubmitEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitEmail = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setSuccessMessage(null);
     setErrorMessage(null);
     setLoading(true);
@@ -42,8 +42,8 @@ export const AuthSelection: React.FC = () => {
 
     try {
       if (authMode === 'login') {
-        setSuccessMessage('✅ Đăng nhập thành công! Đang chuyển hướng...');
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        setSuccessMessage('✅ Đăng nhập thành công! Đang đưa bạn vào hệ thống...');
+        await new Promise((resolve) => setTimeout(resolve, 400));
         try {
           await signInWithEmail(email, password);
         } catch (err: any) {
@@ -52,8 +52,8 @@ export const AuthSelection: React.FC = () => {
           await loginAsGuest(email.split('@')[0] || 'Người dùng', selectedRole, email);
         }
       } else {
-        setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang chuyển hướng...');
-        await new Promise((resolve) => setTimeout(resolve, 600));
+        setSuccessMessage('🎉 Đăng ký tài khoản thành công! Đang đưa bạn vào hệ thống...');
+        await new Promise((resolve) => setTimeout(resolve, 500));
         try {
           await signUpWithEmail(email, password, fullName, selectedRole);
           await signInWithEmail(email, password);
@@ -81,7 +81,7 @@ export const AuthSelection: React.FC = () => {
         await signInWithGoogle(selectedRole);
       } else {
         setSuccessMessage('✅ Đăng nhập thành công với Tài Khoản Google!');
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 400));
         await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, email || 'ngocngan091002@gmail.com');
       }
     } catch (err: any) {
@@ -146,6 +146,36 @@ export const AuthSelection: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Quick 1-Click Auto Login Suggestion Box */}
+          {email && password && (
+            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-sky-50 to-amber-50 border-2 border-sky-300 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                    {email.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-extrabold text-xs text-slate-900">Gợi Ý Đăng Nhập Đã Lưu:</div>
+                    <div className="text-[11px] text-sky-800 font-mono font-bold">{email}</div>
+                  </div>
+                </div>
+                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                  ✓ Đã Lưu Mật Khẩu
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleSubmitEmail()}
+                disabled={loading}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3 px-4 rounded-xl text-xs shadow-md transition-all flex items-center justify-center space-x-2 active:scale-98 disabled:opacity-50"
+              >
+                <span>⚡ VÀO THẲNG HỆ THỐNG (ĐĂNG NHẬP 1-CLICK)</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Auth Mode Toggle */}
           <div className="flex rounded-2xl bg-slate-100 p-1 mb-6">
@@ -241,7 +271,7 @@ export const AuthSelection: React.FC = () => {
               </div>
             </div>
 
-            {/* Remember Me Checkbox & Browser Autofill Encouragement */}
+            {/* Remember Me Checkbox */}
             <div className="flex items-center justify-between text-xs pt-1">
               <label className="flex items-center space-x-2 cursor-pointer select-none text-slate-700 font-bold">
                 <input
