@@ -169,10 +169,77 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
     }
   };
 
+  const calculateExactSubmissionScore = (sub: Submission) => {
+    const currentAssignment = assignments.find((a) => a.id === selectedAssignmentId);
+    let questions: Question[] = [];
+
+    if (currentAssignment?.questions_json) {
+      if (Array.isArray(currentAssignment.questions_json)) {
+        questions = currentAssignment.questions_json;
+      } else if (typeof currentAssignment.questions_json === 'string') {
+        try {
+          questions = JSON.parse(currentAssignment.questions_json);
+        } catch (e) {}
+      }
+    }
+
+    if (questions.length === 0 && selectedAssignmentId) {
+      try {
+        const raw = localStorage.getItem(LOCAL_ASSIGNMENTS_KEY);
+        if (raw) {
+          const parsed: Assignment[] = JSON.parse(raw);
+          const matched = parsed.find((a) => a.id === selectedAssignmentId || a.title === currentAssignment?.title);
+          if (matched?.questions_json) {
+            if (Array.isArray(matched.questions_json)) {
+              questions = matched.questions_json;
+            } else if (typeof matched.questions_json === 'string') {
+              questions = JSON.parse(matched.questions_json);
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!questions || questions.length === 0) {
+      return { score: 10, feedback: 'Con làm bài rất xuất sắc!' };
+    }
+
+    let correctCount = 0;
+    const wrongQuestions: string[] = [];
+
+    questions.forEach((q, idx) => {
+      const studentAns = sub.answers_json?.[q.id] || sub.answers_json?.[`q_${idx}`] || (sub.answers_json ? Object.values(sub.answers_json)[idx] : undefined);
+      const isCorrect = studentAns === q.correct_answer || (q.correct_answer && String(studentAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+
+      if (isCorrect) {
+        correctCount++;
+      } else {
+        wrongQuestions.push(`Câu ${idx + 1}`);
+      }
+    });
+
+    const calculatedScore = Math.round(((correctCount / questions.length) * 10) * 10) / 10;
+    let calculatedFeedback = '';
+
+    if (correctCount === questions.length) {
+      calculatedFeedback = `Con làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
+    } else if (correctCount > 0) {
+      calculatedFeedback = `Con làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần chú ý ôn lại ${wrongQuestions.join(', ')} nhé!`;
+    } else {
+      calculatedFeedback = `Con cần nỗ lực luyện tập thêm nhé! Hãy xem lại đáp án gợi ý để làm tốt hơn ở bài sau.`;
+    }
+
+    return {
+      score: calculatedScore,
+      feedback: calculatedFeedback,
+    };
+  };
+
   const handleSelectSubmission = (sub: Submission) => {
     setSelectedSubmission(sub);
-    setScore(sub.final_score ?? sub.ai_suggested_score ?? 10);
-    setFeedback(sub.final_feedback ?? sub.ai_suggested_feedback ?? 'Con làm bài rất xuất sắc! Đã làm đúng toàn bộ câu hỏi.');
+    const autoResult = calculateExactSubmissionScore(sub);
+    setScore(sub.final_score ?? sub.ai_suggested_score ?? autoResult.score);
+    setFeedback(sub.final_feedback ?? sub.ai_suggested_feedback ?? autoResult.feedback);
   };
 
   const handleRequestAIGrading = async () => {

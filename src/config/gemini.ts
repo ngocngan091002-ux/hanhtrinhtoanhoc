@@ -129,15 +129,34 @@ Trả về định dạng JSON:
 }
 CHỈ TRẢ VỀ JSON HỢP LỆ.`;
 
+  let correctCount = 0;
+  const wrongQuestions: string[] = [];
+
+  questions.forEach((q, idx) => {
+    const userAns = answers[q.id] || answers[`q_${idx}`] || (answers ? Object.values(answers)[idx] : undefined);
+    const isCorrect = userAns === q.correct_answer || (q.correct_answer && String(userAns).trim().toLowerCase() === String(q.correct_answer).trim().toLowerCase());
+
+    if (isCorrect) {
+      correctCount++;
+    } else {
+      wrongQuestions.push(`Câu ${idx + 1}`);
+    }
+  });
+
+  const calculatedScore = questions.length > 0 ? Math.round(((correctCount / questions.length) * 10) * 10) / 10 : 10;
+  let defaultFeedback = '';
+  if (correctCount === questions.length) {
+    defaultFeedback = `Con làm bài rất xuất sắc! Đã làm đúng toàn bộ ${questions.length}/${questions.length} câu hỏi.`;
+  } else if (correctCount > 0) {
+    defaultFeedback = `Con làm đúng ${correctCount}/${questions.length} câu (Đạt ${calculatedScore} điểm). Cần xem lại ${wrongQuestions.join(', ')} nhé!`;
+  } else {
+    defaultFeedback = `Con cần cố gắng hơn ở bài sau nhé! Hãy xem lại đáp án gợi ý để ôn tập lại.`;
+  }
+
   if (!ai) {
-    let correctCount = 0;
-    questions.forEach(q => {
-      if (answers[q.id] === q.correct_answer) correctCount++;
-    });
-    const score = questions.length > 0 ? (correctCount / questions.length) * 10 : 10;
     return {
-      suggested_score: Math.round(score * 10) / 10,
-      suggested_feedback: `AI Gợi Ý: Học sinh trả lời đúng ${correctCount}/${questions.length} câu. Thái độ làm bài rất nghiêm túc!`
+      suggested_score: calculatedScore,
+      suggested_feedback: defaultFeedback,
     };
   }
 
@@ -148,12 +167,16 @@ CHỈ TRẢ VỀ JSON HỢP LỆ.`;
     });
     const text = response.text || '';
     const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    const parsed = JSON.parse(cleanJson);
+    return {
+      suggested_score: parsed.suggested_score !== undefined ? parsed.suggested_score : calculatedScore,
+      suggested_feedback: parsed.suggested_feedback || defaultFeedback,
+    };
   } catch (error) {
     console.error('Error suggesting grading:', error);
     return {
-      suggested_score: 8.5,
-      suggested_feedback: 'Học sinh hoàn thành bài nộp tương đối tốt.'
+      suggested_score: calculatedScore,
+      suggested_feedback: defaultFeedback,
     };
   }
 }
