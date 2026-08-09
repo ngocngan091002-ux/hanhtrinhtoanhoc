@@ -133,50 +133,29 @@ export const AssignmentsView: React.FC = () => {
   };
 
   const [questionTimes, setQuestionTimes] = useState<Record<string, number>>({});
-  const activeQuestionStartRef = React.useRef<number>(Date.now());
-  const currentActiveQuestionRef = React.useRef<string>('');
-  const currentActiveQuestionIdxRef = React.useRef<number>(0);
-  const questionDurationsRef = React.useRef<Record<string, number>>({});
+  const quizStartTimeRef = React.useRef<number>(Date.now());
+  const questionFixedTimesRef = React.useRef<Record<string, number>>({});
 
   const handleStartQuiz = (a: Assignment) => {
     setActiveAssignment(a);
     setAnswers({});
     setQuestionTimes({});
-    questionDurationsRef.current = {};
-    activeQuestionStartRef.current = Date.now();
-
-    const firstQ = a.questions_json?.[0];
-    currentActiveQuestionRef.current = firstQ?.id || 'q_0';
-    currentActiveQuestionIdxRef.current = 0;
-  };
-
-  const recordTimeForActiveQuestion = (nextQuestionId?: string, nextQuestionIdx?: number) => {
-    const now = Date.now();
-    const elapsed = Math.max(1, Math.round((now - activeQuestionStartRef.current) / 1000));
-    activeQuestionStartRef.current = now;
-
-    const curId = currentActiveQuestionRef.current;
-    const curIdx = currentActiveQuestionIdxRef.current;
-
-    if (curId) {
-      questionDurationsRef.current[curId] = (questionDurationsRef.current[curId] || 0) + elapsed;
-    }
-    questionDurationsRef.current[`q_${curIdx}`] = (questionDurationsRef.current[`q_${curIdx}`] || 0) + elapsed;
-    questionDurationsRef.current[curIdx] = (questionDurationsRef.current[curIdx] || 0) + elapsed;
-
-    setQuestionTimes({ ...questionDurationsRef.current });
-
-    if (nextQuestionId !== undefined) {
-      currentActiveQuestionRef.current = nextQuestionId;
-    }
-    if (nextQuestionIdx !== undefined) {
-      currentActiveQuestionIdxRef.current = nextQuestionIdx;
-    }
+    questionFixedTimesRef.current = {};
+    quizStartTimeRef.current = Date.now();
   };
 
   const handleSelectOption = (questionId: string, option: string, qIdx?: number) => {
     const targetIdx = qIdx !== undefined ? qIdx : 0;
-    recordTimeForActiveQuestion(questionId, targetIdx);
+    const now = Date.now();
+
+    // Check if time for this question is already fixed/locked
+    if (questionFixedTimesRef.current[questionId] === undefined && questionFixedTimesRef.current[`q_${targetIdx}`] === undefined) {
+      const elapsedSec = Math.max(1, Math.round((now - quizStartTimeRef.current) / 1000));
+      questionFixedTimesRef.current[questionId] = elapsedSec;
+      questionFixedTimesRef.current[`q_${targetIdx}`] = elapsedSec;
+      questionFixedTimesRef.current[targetIdx] = elapsedSec;
+      setQuestionTimes({ ...questionFixedTimesRef.current });
+    }
 
     setAnswers((prev) => ({
       ...prev,
@@ -192,10 +171,18 @@ export const AssignmentsView: React.FC = () => {
 
     setSubmitting(true);
 
-    // Finalize time recording for current active question
-    recordTimeForActiveQuestion();
+    // For any un-answered question, lock current elapsed time if submitted
+    const now = Date.now();
+    const currentElapsed = Math.max(1, Math.round((now - quizStartTimeRef.current) / 1000));
+    activeAssignment.questions_json?.forEach((q, idx) => {
+      if (questionFixedTimesRef.current[q.id] === undefined && questionFixedTimesRef.current[`q_${idx}`] === undefined) {
+        questionFixedTimesRef.current[q.id] = currentElapsed;
+        questionFixedTimesRef.current[`q_${idx}`] = currentElapsed;
+        questionFixedTimesRef.current[idx] = currentElapsed;
+      }
+    });
 
-    const finalQuestionTimes = { ...questionDurationsRef.current };
+    const finalQuestionTimes = { ...questionFixedTimesRef.current };
     const studentRealName = profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Học sinh Nguyễn Thị Ngọc Ngân';
 
     const localSub: Submission = {
