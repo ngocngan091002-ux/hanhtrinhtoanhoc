@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
-import { GraduationCap, School, ShieldCheck, Sparkles, Mail, Lock, User as UserIcon, Zap, CheckCircle2 } from 'lucide-react';
+import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2 } from 'lucide-react';
 
 export const AuthSelection: React.FC = () => {
   const { signInWithGoogle, signInWithEmail, signUpWithEmail, loginAsGuest, selectedRole, setSelectedRole } = useAuth();
@@ -66,22 +66,6 @@ export const AuthSelection: React.FC = () => {
     }
   };
 
-  const handleQuickDemoLogin = async (roleOverride?: UserRole) => {
-    const targetRole = roleOverride || selectedRole;
-    setSelectedRole(targetRole);
-    setLoading(true);
-    setSuccessMessage('🚀 Đang truy cập hệ thống mượt mà...');
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const demoNames: Record<UserRole, string> = {
-      teacher: 'Cô Ngân (Giáo Viên)',
-      student: 'Nguyễn Văn Học Sinh',
-      admin: 'Quản Trị Viên Hệ Thống',
-    };
-    await loginAsGuest(demoNames[targetRole], targetRole);
-    setLoading(false);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-amber-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Background Decor */}
@@ -98,58 +82,18 @@ export const AuthSelection: React.FC = () => {
           Hành Trình Toán Học 📐
         </h1>
         <p className="mt-3 text-lg text-slate-600 max-w-md mx-auto">
-          Hệ thống giáo dục thông minh dành cho Admin, Giáo viên & Học sinh.
+          Hệ thống giáo dục thông minh dành cho Giáo viên & Học sinh.
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl relative z-10 space-y-6">
-        {/* 🚀 1-CLICK INSTANT ACCESS HERO BANNER */}
-        <div className="bg-gradient-to-r from-sky-600 to-indigo-700 p-6 rounded-3xl text-white shadow-xl space-y-4 border border-sky-400/30">
-          <div className="flex items-center space-x-2">
-            <Zap className="w-6 h-6 text-amber-300 animate-bounce" />
-            <h2 className="text-lg font-extrabold font-display">Vào Trải Nghiệm Nhanh 1-Click (Mượt Mà 100%)</h2>
-          </div>
-          <p className="text-xs text-sky-100">
-            Bấm 1 nút bên dưới để vào thẳng giao diện tương ứng tức thì:
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-            <button
-              onClick={() => handleQuickDemoLogin('student')}
-              disabled={loading}
-              className="bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
-            >
-              <GraduationCap className="w-4 h-4" />
-              <span>Vào Vai Học Sinh</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickDemoLogin('teacher')}
-              disabled={loading}
-              className="bg-white hover:bg-slate-100 text-sky-900 font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5"
-            >
-              <School className="w-4 h-4 text-sky-600" />
-              <span>Vào Vai Giáo Viên</span>
-            </button>
-
-            <button
-              onClick={() => handleQuickDemoLogin('admin')}
-              disabled={loading}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-3 py-3 rounded-2xl text-xs shadow-md transition-all active:scale-95 flex items-center justify-center space-x-1.5 border border-slate-700"
-            >
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Vào Vai Admin</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Regular Auth Box */}
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        {/* Auth Box */}
         <div className="bg-white/90 backdrop-blur-md py-8 px-6 shadow-xl rounded-3xl sm:px-10 border border-slate-100">
           
-          {/* Role selection pills */}
+          {/* Role selection pills (Học Sinh & Giáo Viên) */}
           <div className="mb-6">
             <label className="block text-xs font-bold text-slate-500 uppercase text-center mb-3">Chọn vai trò hệ thống:</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleRoleSelect('student')}
@@ -159,7 +103,7 @@ export const AuthSelection: React.FC = () => {
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <GraduationCap className="w-5 h-5 text-amber-600" />
+                <GraduationCap className="w-6 h-6 text-amber-600" />
                 <span>👨‍🎓 Học Sinh</span>
               </button>
 
@@ -172,21 +116,8 @@ export const AuthSelection: React.FC = () => {
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <School className="w-5 h-5 text-sky-600" />
+                <School className="w-6 h-6 text-sky-600" />
                 <span>👩‍🏫 Giáo Viên</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleRoleSelect('admin')}
-                className={`py-3 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 ${
-                  selectedRole === 'admin'
-                    ? 'border-slate-800 bg-slate-100 text-slate-900 shadow-sm ring-2 ring-slate-800/20'
-                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
-                }`}
-              >
-                <ShieldCheck className="w-5 h-5 text-slate-800" />
-                <span>🛡️ Quản Trị Viên</span>
               </button>
             </div>
           </div>
