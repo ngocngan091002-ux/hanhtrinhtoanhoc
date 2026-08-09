@@ -325,17 +325,21 @@ export const AssignmentsView: React.FC = () => {
                         {userSub.is_finalized ? (
                           <span className="text-emerald-800 font-extrabold text-sm">Điểm: {userSub.final_score}đ</span>
                         ) : (
-                          <span className="text-slate-400 font-medium text-[11px]">Chờ thầy cô chấm điểm</span>
+                          <span className="text-amber-700 font-bold text-[11px] bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                            Chờ thầy cô chấm điểm
+                          </span>
                         )}
                       </div>
 
-                      <button
-                        onClick={() => setReviewAssignment(ass)}
-                        className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 transition-all flex items-center justify-center space-x-1.5"
-                      >
-                        <Eye className="w-4 h-4 text-sky-600" />
-                        <span>XEM LẠI BÀI LÀM & NHẬN XÉT</span>
-                      </button>
+                      {userSub.is_finalized && (
+                        <button
+                          onClick={() => setReviewAssignment(ass)}
+                          className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-all flex items-center justify-center space-x-1.5 shadow-xs"
+                        >
+                          <Eye className="w-4 h-4 text-emerald-600" />
+                          <span>XEM LẠI BÀI LÀM & NHẬN XÉT CỦA THẦY CÔ</span>
+                        </button>
+                      )}
                     </>
                   ) : (
                     <button
