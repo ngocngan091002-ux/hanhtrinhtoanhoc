@@ -102,17 +102,11 @@ export const AuthSelection: React.FC = () => {
     setLoading(true);
 
     try {
-      if (isSupabaseConfigured) {
-        setSuccessMessage('🌐 Đang chuyển hướng sang trang xác thực tài khoản Google chính thức...');
-        await signInWithGoogle(selectedRole);
-      } else {
-        setSuccessMessage('✅ Đăng nhập thành công với Tài Khoản Google!');
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        await loginAsGuest('Tài Khoản Google (Demo)', selectedRole, email || 'ngocngan091002@gmail.com');
-      }
+      setSuccessMessage('🌐 Đang chuyển hướng sang trang chọn tài khoản Google Gmail chính thức...');
+      await signInWithGoogle(selectedRole);
     } catch (err: any) {
       setSuccessMessage(null);
-      setErrorMessage(`❌ Đăng nhập Google không thành công: ${err.message || 'Vui lòng chọn lại tài khoản Google!'}`);
+      setErrorMessage(`❌ Không thể chuyển hướng sang Google: ${err.message || 'Vui lòng kiểm tra lại kết nối mạng hoặc cấu hình Google OAuth!'}`);
       setLoading(false);
     }
   };
