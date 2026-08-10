@@ -209,10 +209,10 @@ export const StudentDashboard: React.FC = () => {
       </div>
 
       {/* Tabs Bar */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap gap-1">
+      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center overflow-x-auto gap-1.5 scrollbar-none">
         <button
           onClick={() => setActiveTab('home')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'home' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -222,7 +222,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('daily_tasks')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'daily_tasks' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -232,7 +232,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('assignments')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'assignments' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -242,7 +242,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('games')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'games' ? 'bg-amber-500 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -252,7 +252,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('materials')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'materials' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -262,7 +262,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('results')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'results' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -272,7 +272,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('leaderboard')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'leaderboard' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -282,7 +282,7 @@ export const StudentDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'profile' ? 'bg-sky-600 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >

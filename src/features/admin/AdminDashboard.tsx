@@ -75,10 +75,10 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       {/* Admin Tabs */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex gap-2">
+      <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center overflow-x-auto gap-2 scrollbar-none">
         <button
           onClick={() => setActiveTab('users')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'users' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -88,7 +88,7 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('classes')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'classes' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -98,7 +98,7 @@ export const AdminDashboard: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('materials')}
-          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
             activeTab === 'materials' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
@@ -109,58 +109,104 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Users Tab */}
       {activeTab === 'users' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
           <h3 className="text-base font-bold text-slate-800">Danh Sách Tài Khoản Hệ Thống ({users.length})</h3>
 
           {loading ? (
             <div className="py-8 text-center text-slate-400">Đang tải danh sách người dùng...</div>
           ) : (
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
-              <table className="w-full text-left text-sm text-slate-700">
-                <thead className="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b border-slate-200">
-                  <tr>
-                    <th className="px-4 py-3">Họ và tên</th>
-                    <th className="px-4 py-3">Email</th>
-                    <th className="px-4 py-3">Vai trò (Role)</th>
-                    <th className="px-4 py-3">Ngày tạo</th>
-                    <th className="px-4 py-3 text-right">Đổi quyền</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => (
-                    <tr key={u.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3 font-bold text-slate-900">{u.full_name}</td>
-                      <td className="px-4 py-3 text-xs font-mono text-slate-600">{u.email}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full uppercase ${
-                            u.role === 'admin'
-                              ? 'bg-purple-100 text-purple-800'
-                              : u.role === 'teacher'
-                              ? 'bg-sky-100 text-sky-800'
-                              : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">{new Date(u.created_at).toLocaleDateString('vi-VN')}</td>
-                      <td className="px-4 py-3 text-right space-x-1">
+            <>
+              {/* 📱 Mobile Card View (< 640px) */}
+              <div className="block sm:hidden space-y-3">
+                {users.map((u) => (
+                  <div key={u.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3 shadow-2xs">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-extrabold text-slate-900 text-sm font-display">{u.full_name}</div>
+                        <div className="text-xs font-mono text-slate-500 break-all">{u.email}</div>
+                      </div>
+                      <span
+                        className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase shrink-0 ${
+                          u.role === 'admin'
+                            ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                            : u.role === 'teacher'
+                            ? 'bg-sky-100 text-sky-800 border border-sky-200'
+                            : 'bg-amber-100 text-amber-800 border border-amber-200'
+                        }`}
+                      >
+                        {u.role}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t border-slate-200/60 text-xs">
+                      <span className="text-slate-400 text-[11px]">
+                        Ngày tạo: {new Date(u.created_at).toLocaleDateString('vi-VN')}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-[11px] font-bold text-slate-600">Đổi quyền:</span>
                         <select
                           value={u.role}
                           onChange={(e) => handleUpdateRole(u.id, e.target.value as UserRole)}
-                          className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white"
+                          className="px-2 py-1 text-xs border border-slate-300 rounded-lg bg-white font-bold"
                         >
                           <option value="student">student</option>
                           <option value="teacher">teacher</option>
                           <option value="admin">admin</option>
                         </select>
-                      </td>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 💻 Desktop Table View (>= 640px) */}
+              <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-xl">
+                <table className="w-full text-left text-sm text-slate-700 min-w-[650px] whitespace-nowrap">
+                  <thead className="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3">Họ và tên</th>
+                      <th className="px-4 py-3">Email</th>
+                      <th className="px-4 py-3">Vai trò (Role)</th>
+                      <th className="px-4 py-3">Ngày tạo</th>
+                      <th className="px-4 py-3 text-right">Đổi quyền</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {users.map((u) => (
+                      <tr key={u.id} className="hover:bg-slate-50">
+                        <td className="px-4 py-3 font-bold text-slate-900">{u.full_name}</td>
+                        <td className="px-4 py-3 text-xs font-mono text-slate-600">{u.email}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full uppercase ${
+                              u.role === 'admin'
+                                ? 'bg-purple-100 text-purple-800'
+                                : u.role === 'teacher'
+                                ? 'bg-sky-100 text-sky-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{new Date(u.created_at).toLocaleDateString('vi-VN')}</td>
+                        <td className="px-4 py-3 text-right space-x-1">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleUpdateRole(u.id, e.target.value as UserRole)}
+                            className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white font-bold"
+                          >
+                            <option value="student">student</option>
+                            <option value="teacher">teacher</option>
+                            <option value="admin">admin</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       )}
