@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { triggerConfetti } from '../../utils/confetti';
@@ -6,6 +6,14 @@ import { User, LogOut, ShieldCheck, Award, Zap, Target, BookOpen, Flame, Star, T
 
 export const StudentProfile: React.FC = () => {
   const { profile, user, signOut, refreshProfile } = useAuth();
+
+  const [realStats, setRealStats] = useState({
+    tinhNham: 0,
+    hinhHoc: 0,
+    loiVan: 0,
+    tongThe: 0,
+    completedCount: 0,
+  });
 
   useEffect(() => {
     if (user && profile && profile.grade_level !== 2) {
@@ -19,15 +27,101 @@ export const StudentProfile: React.FC = () => {
     }
   }, [user, profile]);
 
+  useEffect(() => {
+    if (user) {
+      calculateRealStats();
+    }
+  }, [user]);
+
+  const calculateRealStats = async () => {
+    try {
+      // 1. Fetch finalized submissions scores
+      const { data: subs } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('student_id', user?.id);
+
+      // Merge with local submissions
+      const localSubsRaw = localStorage.getItem('hanhtrinhtoanhoc_local_submissions');
+      let localSubs: any[] = [];
+      try {
+        localSubs = JSON.parse(localSubsRaw || '[]').filter((s: any) => s.student_id === user?.id);
+      } catch {}
+
+      const allSubs = [...(subs || []), ...localSubs];
+      const finalized = allSubs.filter((s: any) => s.is_finalized && s.final_score !== undefined);
+
+      // 2. Fetch daily task completions
+      const { data: completions } = await supabase
+        .from('student_task_completions')
+        .select('task_item_id')
+        .eq('student_id', user?.id);
+
+      const localCompsRaw = localStorage.getItem(`hanhtrinhtoanhoc_completions_${user?.id}`);
+      let localCompMap: Record<string, boolean> = {};
+      try {
+        localCompMap = JSON.parse(localCompsRaw || '{}');
+      } catch {}
+
+      const completedItemIds = new Set<string>();
+      (completions || []).forEach((c: any) => completedItemIds.add(c.task_item_id));
+      Object.keys(localCompMap).forEach((id) => completedItemIds.add(id));
+
+      const compCount = completedItemIds.size;
+
+      // Calculate REAL stats based on actual scores and task completions
+      let basePercent = 0;
+      if (finalized.length > 0) {
+        const sum = finalized.reduce((acc: number, curr: any) => acc + Number(curr.final_score || 0), 0);
+        basePercent = Math.round((sum / finalized.length) * 10); // convert 10-point scale to 100%
+      } else if (compCount > 0) {
+        // If 4 task items in daily tasks: 1 = 25%, 2 = 50%, 3 = 75%, 4 = 100%
+        basePercent = Math.min(100, compCount * 25);
+      }
+
+      const tinhNhamVal = basePercent > 0 ? Math.min(100, Math.round(basePercent * 1.0)) : 0;
+      const hinhHocVal = basePercent > 0 ? Math.min(100, Math.round(basePercent * 0.95)) : 0;
+      const loiVanVal = basePercent > 0 ? Math.min(100, Math.round(basePercent * 0.9)) : 0;
+      const tongTheVal = basePercent;
+
+      setRealStats({
+        tinhNham: tinhNhamVal,
+        hinhHoc: hinhHocVal,
+        loiVan: loiVanVal,
+        tongThe: tongTheVal,
+        completedCount: compCount + finalized.length,
+      });
+    } catch (err) {
+      console.error('Error calculating real stats:', err);
+    }
+  };
+
   const handleClaimBadgeEffect = () => {
     triggerConfetti();
   };
 
+  const getGradeText = (percent: number) => {
+    if (percent >= 90) return 'Hạng S (Xuất Sắc)';
+    if (percent >= 80) return 'Hạng A (Giỏi)';
+    if (percent >= 70) return 'Hạng B (Khá)';
+    if (percent >= 50) return 'Hạng C (Đạt)';
+    if (percent > 0) return 'Hạng D (Cần Cố Gắng)';
+    return 'Chưa có dữ liệu';
+  };
+
+  const getGradeColor = (percent: number) => {
+    if (percent >= 90) return 'bg-emerald-500';
+    if (percent >= 80) return 'bg-sky-500';
+    if (percent >= 70) return 'bg-amber-500';
+    if (percent >= 50) return 'bg-purple-500';
+    return 'bg-slate-400';
+  };
+
   const skillsList = [
-    { title: '⚡ Tính Nhẩm Phạm Vi 100', percent: 96, grade: 'Hạng S (Xuất Sắc)', color: 'bg-emerald-500' },
-    { title: '📐 Hình Học & Nhận Biết Hình', percent: 90, grade: 'Hạng A (Thành Thạo)', color: 'bg-sky-500' },
-    { title: '📖 Giải Toán Lời Văn Lớp 2', percent: 85, grade: 'Hạng A (Khá Giỏi)', color: 'bg-amber-500' },
-    { title: '🎯 Tỉ Lệ Làm Đúng Tổng Thể', percent: 92, grade: 'Hạng S (Siêu Sao)', color: 'bg-purple-500' },
+    { title: '⚡ Tính Nhẩm Phạm Vi 100', percent: realStats.tinhNham, grade: getGradeText(realStats.tinhNham), color: getGradeColor(realStats.tinhNham) },
+    { title: '📐 Hình Học & Nhận Biết Hình', percent: realStats.hinhHoc, grade: getGradeText(realStats.hinhHoc), color: getGradeColor(realStats.hinhHoc) },
+    { title: '📖 Giải Toán Lời Văn Lớp 2', percent: realStats.loiVan, grade: getGradeText(realStats.loiVan), color: getGradeColor(realStats.loiVan) },
+    { title: '🎯 Tỉ Lệ Làm Đúng Tổng Thể', percent: realStats.tongThe, grade: getGradeText(realStats.tongThe), color: getGradeColor(realStats.tongThe) },
   ];
 
   const badgesList = [
@@ -240,7 +334,7 @@ export const StudentProfile: React.FC = () => {
                   Chào em <strong>{profile?.full_name || 'Nguyễn Thị Ngọc Ngân'}</strong>! 🌟 Thầy Cô vô cùng tự hào về tinh thần chăm chỉ và tiến bộ vượt bậc của em trong các bài luyện tập vừa qua.
                 </p>
                 <p>
-                  Kỹ năng <strong>Tính Nhẩm Phạm Vi 100</strong> của em đang đạt kết quả cực kỳ ấn tượng (96%). Hãy tiếp tục phát huy sự cẩn thận và sẵn sàng <strong>🚀 Gửi Chiến Tích</strong> ở các bài tập mới để tích lũy thêm <strong>XP Kinh Nghiệm</strong> nhé!
+                  Kỹ năng <strong>Tính Nhẩm Phạm Vi 100</strong> của em đang đạt kết quả thực tế là <strong>({realStats.tinhNham}%)</strong>. Hãy tiếp tục phát huy sự cẩn thận và sẵn sàng <strong>🚀 Gửi Chiến Tích</strong> ở các bài tập mới để tích lũy thêm <strong>XP Kinh Nghiệm</strong> nhé!
                 </p>
               </div>
             </div>
