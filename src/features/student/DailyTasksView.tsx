@@ -61,35 +61,27 @@ export const DailyTasksView: React.FC = () => {
     }
   };
 
-  const toggleItemCompletion = async (itemId: string) => {
+  const markItemAsCompleted = async (itemId: string) => {
     if (!user) return;
     const isCompleted = completions[itemId];
 
+    // Đã chinh phục rồi thì giữ nguyên vĩnh viễn, không cho đổi lại thành chưa chinh phục
+    if (isCompleted) return;
+
     try {
-      if (isCompleted) {
-        // Delete completion
-        await supabase
-          .from('student_task_completions')
-          .delete()
-          .eq('task_item_id', itemId)
-          .eq('student_id', user.id);
+      // Insert completion
+      await supabase
+        .from('student_task_completions')
+        .insert({
+          task_item_id: itemId,
+          student_id: user.id,
+        });
 
-        setCompletions((prev) => ({ ...prev, [itemId]: false }));
-      } else {
-        // Insert completion
-        await supabase
-          .from('student_task_completions')
-          .insert({
-            task_item_id: itemId,
-            student_id: user.id,
-          });
-
-        setCompletions((prev) => ({ ...prev, [itemId]: true }));
-        // Trigger celebratory fireworks confetti for visual feedback!
-        triggerConfetti();
-      }
+      setCompletions((prev) => ({ ...prev, [itemId]: true }));
+      // Trigger celebratory fireworks confetti for visual feedback!
+      triggerConfetti();
     } catch (err: any) {
-      console.error('Error toggling completion:', err);
+      console.error('Error marking task completed:', err);
     }
   };
 
@@ -139,11 +131,11 @@ export const DailyTasksView: React.FC = () => {
                     return (
                       <div
                         key={item.id}
-                        onClick={() => toggleItemCompletion(item.id)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                        onClick={() => markItemAsCompleted(item.id)}
+                        className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                           isDone
-                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950 font-semibold'
-                            : 'bg-amber-50/80 border-amber-200 text-amber-950 hover:bg-amber-100/60'
+                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950 font-semibold cursor-default'
+                            : 'bg-amber-50/80 border-amber-200 text-amber-950 hover:bg-amber-100/60 cursor-pointer'
                         }`}
                       >
                         <div className="flex items-center space-x-3">
