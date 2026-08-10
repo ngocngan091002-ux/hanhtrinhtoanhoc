@@ -543,7 +543,9 @@ export const AssignmentsView: React.FC = () => {
 
                     {q.explanation && (
                       <div className="p-3 rounded-xl bg-sky-50 text-sky-900 text-xs italic">
-                        <strong>Lời giải chi tiết:</strong> {q.explanation}
+                        <strong>Lời giải chi tiết:</strong> {
+                          q.explanation.split(/\.\s*(?:Em|Con|Rất|Tích|Phép|Tuyệt|Xuất|Giải|Tính|Học sinh|Đúng)/i)[0].trim() + (q.explanation.trim().endsWith('.') ? '.' : '')
+                        }
                       </div>
                     )}
                   </div>
