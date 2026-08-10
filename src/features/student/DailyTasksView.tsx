@@ -131,10 +131,10 @@ export const DailyTasksView: React.FC = () => {
                     return (
                       <div
                         key={item.id}
-                        onClick={() => markItemAsCompleted(item.id)}
+                        onClick={isDone ? undefined : () => markItemAsCompleted(item.id)}
                         className={`p-4 rounded-2xl border transition-all flex items-center justify-between ${
                           isDone
-                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950 font-semibold cursor-default'
+                            ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950 font-semibold cursor-default pointer-events-none select-none opacity-95'
                             : 'bg-amber-50/80 border-amber-200 text-amber-950 hover:bg-amber-100/60 cursor-pointer'
                         }`}
                       >
