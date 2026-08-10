@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { MathClass, ClassMember, UserProfile } from '../../types';
-import { Users, Plus, UserPlus, Copy, Check, School, Trash2, FileSpreadsheet } from 'lucide-react';
+import { Users, Plus, UserPlus, Copy, Check, School, Trash2, FileSpreadsheet, Download, Upload } from 'lucide-react';
 
 interface ClassManagementProps {
   onSelectClass?: (cls: MathClass) => void;
@@ -203,6 +203,47 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
     }
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (text) {
+        setCsvContent(text);
+        setShowCsvImport(true);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const exportToCsv = () => {
+    if (!selectedClass || members.length === 0) return alert('Lớp chưa có học sinh nào để xuất file.');
+
+    let csv = '\uFEFF'; // UTF-8 BOM for Windows Excel compatibility
+    csv += 'STT,Họ và Tên,Email,Ngày Tham Gia\n';
+
+    members.forEach((m, idx) => {
+      const name = `"${(m.student?.full_name || 'Học sinh').replace(/"/g, '""')}"`;
+      const email = `"${(m.student?.email || '').replace(/"/g, '""')}"`;
+      const date = `"${new Date(m.joined_at).toLocaleDateString('vi-VN')}"`;
+      csv += `${idx + 1},${name},${email},${date}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safeName = selectedClass.name.replace(/\s+/g, '_');
+    link.setAttribute('download', `Danh_Sach_Hoc_Sinh_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const copyClassCode = () => {
     if (!selectedClass) return;
     navigator.clipboard.writeText(selectedClass.code);
@@ -317,14 +358,33 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                       <UserPlus className="w-4 h-4 text-sky-600" />
                       <span>Thêm học sinh trực tiếp qua Email:</span>
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowCsvImport(!showCsvImport)}
-                      className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5" />
-                      {showCsvImport ? 'Ẩn Import CSV' : 'Import Danh Sách CSV'}
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="file"
+                        accept=".csv,.txt"
+                        ref={fileInputRef}
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs font-bold bg-sky-100 hover:bg-sky-200 text-sky-800 px-3 py-1.5 rounded-lg border border-sky-300 transition-all flex items-center gap-1 shadow-2xs"
+                        title="Chọn file CSV / TXT chứa danh sách email từ máy tính"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>📂 Chọn File CSV Tải Lên</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowCsvImport(!showCsvImport)}
+                        className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        {showCsvImport ? 'Ẩn Dán CSV' : 'Dán Mã CSV'}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex gap-2">
@@ -334,11 +394,10 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                       onChange={(e) => setStudentEmail(e.target.value)}
                       placeholder="Nhập email học sinh (vd: hocsinh@gmail.com)"
                       className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-                      required
                     />
                     <button
                       type="submit"
-                      className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                      className="bg-sky-600 hover:bg-sky-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-sm flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                     >
                       <Plus className="w-4 h-4" /> Thêm
                     </button>
@@ -364,19 +423,30 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                       placeholder="hocsinh1@gmail.com&#10;hocsinh2@gmail.com"
                       className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono bg-white"
                     />
-                    <button
-                      onClick={handleImportCsv}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md"
-                    >
-                      Xác Nhận Import Danh Sách
-                    </button>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={handleImportCsv}
+                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md"
+                      >
+                        Xác Nhận Import Danh Sách
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Members Roster Table */}
               <div>
-                <h4 className="text-sm font-bold text-slate-800 mb-3">Sĩ Số Học Sinh Thuộc Lớp</h4>
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-sm font-bold text-slate-800">Sĩ Số Học Sinh Thuộc Lớp</h4>
+                  <button
+                    onClick={exportToCsv}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl border border-emerald-500 shadow-md transition-all flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>📊 XUẤT FILE DANH SÁCH LỚP (EXCEL/CSV)</span>
+                  </button>
+                </div>
                 {members.length === 0 ? (
                   <div className="py-12 text-center text-slate-400 text-sm border border-slate-200 rounded-xl">
                     Lớp chưa có học sinh nào. Hãy đưa Mã Join Code cho học sinh hoặc nhập Email để thêm nhé!
