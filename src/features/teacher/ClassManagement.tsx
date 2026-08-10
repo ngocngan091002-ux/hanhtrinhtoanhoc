@@ -154,39 +154,100 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
 
   const handleImportCsv = async () => {
     if (!csvContent.trim() || !selectedClass) return;
-    const emails = csvContent
+
+    const lines = csvContent
       .split('\n')
       .map((line) => line.trim())
-      .filter((e) => e.length > 0 && e.includes('@'));
+      .filter((l) => l.length > 0 && !l.toLowerCase().startsWith('họ và tên') && !l.toLowerCase().startsWith('stt'));
 
-    if (emails.length === 0) return alert('Không tìm thấy email hợp lệ trong nội dung CSV.');
+    if (lines.length === 0) return alert('Không tìm thấy dữ liệu học sinh hợp lệ trong nội dung CSV/Excel.');
 
-    let count = 0;
-    for (const email of emails) {
+    let createdCount = 0;
+    let addedCount = 0;
+
+    for (const line of lines) {
+      // Split by comma, tab, or semicolon
+      const parts = line.split(/[,;\t]/).map((p) => p.trim().replace(/^["']|["']$/g, ''));
+      let fullName = '';
+      let email = '';
+      let password = '123456';
+
+      if (parts.length >= 2 && parts[1].includes('@')) {
+        fullName = parts[0];
+        email = parts[1];
+        if (parts[2]) password = parts[2];
+      } else if (parts[0].includes('@')) {
+        email = parts[0];
+        fullName = email.split('@')[0];
+      } else {
+        continue;
+      }
+
       try {
-        const { data: studentProfile } = await supabase
+        // 1. Check if student profile exists
+        let { data: studentProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('email', email)
-          .single();
+          .maybeSingle();
 
+        // 2. If student profile does not exist, create new student account & profile automatically!
+        if (!studentProfile) {
+          const newStudentId = crypto.randomUUID ? crypto.randomUUID() : `std_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+          const { data: newProf, error: profErr } = await supabase
+            .from('profiles')
+            .insert({
+              id: newStudentId,
+              full_name: fullName || `Học sinh ${email.split('@')[0]}`,
+              email: email,
+              role: 'student',
+              grade_level: 2,
+            })
+            .select()
+            .single();
+
+          if (!profErr && newProf) {
+            studentProfile = newProf;
+            createdCount++;
+          }
+        }
+
+        // 3. Join student to class_members
         if (studentProfile) {
-          await supabase.from('class_members').insert({
+          const { error: joinErr } = await supabase.from('class_members').insert({
             class_id: selectedClass.id,
             student_id: studentProfile.id,
           });
-          count++;
+          if (!joinErr) addedCount++;
         }
       } catch (err) {
-        // Continue silently for duplicates
+        console.error('Error importing student row:', err);
       }
     }
 
-    alert(`Đã nhập thành công ${count}/${emails.length} học sinh vào lớp!`);
+    alert(`🎉 THÀNH CÔNG! Đã tự động tạo mới ${createdCount} tài khoản học sinh & thêm ${addedCount}/${lines.length} học sinh vào lớp ${selectedClass.name}!`);
     setCsvContent('');
     setShowCsvImport(false);
     fetchMembers(selectedClass.id);
     fetchClasses();
+  };
+
+  const downloadTemplateCsv = () => {
+    let template = '\uFEFF'; // UTF-8 BOM for Windows Excel compatibility
+    template += 'Họ và Tên,Email,Mật Khẩu Mặc Định\n';
+    template += 'Nguyễn Văn An,an.lop2a1@gmail.com,123456\n';
+    template += 'Lê Thị Bình,binh.lop2a1@gmail.com,123456\n';
+    template += 'Trần Hoàng Cường,cuong.lop2a1@gmail.com,123456\n';
+
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Mau_Danh_Sach_Tao_Tai_Khoan_Hoc_Sinh.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleRemoveStudent = async (memberId: string) => {
@@ -412,23 +473,45 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
 
                 {/* CSV Import Modal / Box */}
                 {showCsvImport && (
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Dán danh sách Email học sinh (mỗi dòng 1 email):
-                    </label>
+                  <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-sky-200/80">
+                      <div>
+                        <span className="font-extrabold text-sm text-sky-950 flex items-center gap-1.5 font-display">
+                          <FileSpreadsheet className="w-4 h-4 text-sky-600" />
+                          <span>Tự Động Tạo Tài Khoản & Nhập Lớp Hàng Loạt Từ Excel / CSV</span>
+                        </span>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Định dạng 3 cột: <code>Họ và Tên, Email, Mật Khẩu</code> (Ví dụ: Nguyễn Văn An, an@gmail.com, 123456)
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={downloadTemplateCsv}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-md transition-all flex items-center space-x-1.5 shrink-0 active:scale-95 cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>📥 TẢI FILE EXCEL MẪU</span>
+                      </button>
+                    </div>
+
                     <textarea
                       value={csvContent}
                       onChange={(e) => setCsvContent(e.target.value)}
-                      rows={4}
-                      placeholder="hocsinh1@gmail.com&#10;hocsinh2@gmail.com"
-                      className="w-full p-3 rounded-xl border border-slate-200 text-xs font-mono bg-white"
+                      rows={5}
+                      placeholder="Nguyễn Văn An, an.lop2a1@gmail.com, 123456&#10;Lê Thị Bình, binh.lop2a1@gmail.com, 123456&#10;Trần Hoàng Cường, cuong.lop2a1@gmail.com, 123456"
+                      className="w-full p-3 rounded-xl border border-sky-200 text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
                     />
-                    <div className="flex justify-end">
+
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-[11px] text-slate-500 italic">
+                        💡 Hệ thống sẽ tự tạo mới tài khoản học sinh nếu chưa có và tự động vào lớp {selectedClass.name}!
+                      </span>
                       <button
                         onClick={handleImportCsv}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md"
+                        className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                       >
-                        Xác Nhận Import Danh Sách
+                        ⚡ XÁC NHẬN TẠO TÀI KHOẢN & NHẬP LỚP
                       </button>
                     </div>
                   </div>
