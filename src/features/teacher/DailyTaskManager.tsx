@@ -63,6 +63,13 @@ export const DailyTaskManager: React.FC<DailyTaskManagerProps> = ({ currentClass
             .select('task_item_id, student_id')
             .in('task_item_id', itemIds);
 
+          const sharedKey = `hanhtrinhtoanhoc_shared_completions`;
+          let sharedCompletions: any[] = [];
+          try {
+            sharedCompletions = JSON.parse(localStorage.getItem(sharedKey) || '[]');
+          } catch {}
+
+          const allCompletions = [...(completions || []), ...sharedCompletions];
           const statsMap: Record<string, number> = {};
 
           loadedTasks.forEach((t: any) => {
@@ -75,7 +82,7 @@ export const DailyTaskManager: React.FC<DailyTaskManagerProps> = ({ currentClass
 
             // Group completions by student for this task
             const studentCompletedItemsMap: Record<string, Set<string>> = {};
-            (completions || []).forEach((c: any) => {
+            allCompletions.forEach((c: any) => {
               if (taskItemIds.has(c.task_item_id)) {
                 if (!studentCompletedItemsMap[c.student_id]) {
                   studentCompletedItemsMap[c.student_id] = new Set();

@@ -52,6 +52,15 @@ export const DailyTasksView: React.FC = () => {
         compMap[c.task_item_id] = true;
       });
 
+      // Merge with localStorage completions for 100% tab switching persistence
+      const localSaved = localStorage.getItem(`hanhtrinhtoanhoc_completions_${user?.id}`);
+      if (localSaved) {
+        try {
+          const parsed = JSON.parse(localSaved);
+          Object.assign(compMap, parsed);
+        } catch {}
+      }
+
       setCompletions(compMap);
       setDailyTasks(tasksData || []);
     } catch (err) {
@@ -68,20 +77,34 @@ export const DailyTasksView: React.FC = () => {
     // Đã chinh phục rồi thì giữ nguyên vĩnh viễn, không cho đổi lại thành chưa chinh phục
     if (isCompleted) return;
 
+    // 1. Immediately update state & localStorage for 100% tab persistence
+    const updatedMap = { ...completions, [itemId]: true };
+    setCompletions(updatedMap);
+    localStorage.setItem(`hanhtrinhtoanhoc_completions_${user.id}`, JSON.stringify(updatedMap));
+
+    // Shared completions for teacher side in guest/demo mode
+    const sharedKey = `hanhtrinhtoanhoc_shared_completions`;
     try {
-      // Insert completion
+      const sharedData = JSON.parse(localStorage.getItem(sharedKey) || '[]');
+      if (!sharedData.some((c: any) => c.task_item_id === itemId && c.student_id === user.id)) {
+        sharedData.push({ task_item_id: itemId, student_id: user.id });
+        localStorage.setItem(sharedKey, JSON.stringify(sharedData));
+      }
+    } catch {}
+
+    // Trigger celebratory fireworks confetti for visual feedback!
+    triggerConfetti();
+
+    // 2. Persist to Supabase DB
+    try {
       await supabase
         .from('student_task_completions')
-        .insert({
+        .upsert({
           task_item_id: itemId,
           student_id: user.id,
         });
-
-      setCompletions((prev) => ({ ...prev, [itemId]: true }));
-      // Trigger celebratory fireworks confetti for visual feedback!
-      triggerConfetti();
     } catch (err: any) {
-      console.error('Error marking task completed:', err);
+      console.error('Error saving completion to Supabase:', err);
     }
   };
 
