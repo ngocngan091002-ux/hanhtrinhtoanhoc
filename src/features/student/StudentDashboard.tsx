@@ -10,7 +10,7 @@ import { ResultsProgressView } from './ResultsProgressView';
 import { StudentLeaderboard } from './StudentLeaderboard';
 import { StudentProfile } from './StudentProfile';
 import { KidsMindHero } from '../../components/common/KidsMindHero';
-import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Award, Trophy, User, PlusCircle, CheckCircle, Play } from 'lucide-react';
+import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Award, Trophy, User, PlusCircle, CheckCircle, Play, X } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile, user } = useAuth();
@@ -397,32 +397,39 @@ export const StudentDashboard: React.FC = () => {
 
       {/* Interactive Game / Material Modal Player */}
       {isPlaying && activeMaterial && activeMaterial.material && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-4xl w-full h-[85vh] shadow-2xl flex flex-col overflow-hidden">
-            <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-2 sm:p-4">
+          {/* FLOATING TOP-RIGHT PROMINENT EXIT BUTTON */}
+          <button
+            onClick={() => {
+              if (document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+              }
+              setIsPlaying(false);
+            }}
+            className="fixed top-4 right-4 z-[10000] bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-2xl border-2 border-white flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer uppercase tracking-wide"
+          >
+            <X className="w-5 h-5 text-white" />
+            <span>THOÁT VIDEO / ĐÓNG LẠI</span>
+          </button>
+
+          <div className="bg-slate-900 rounded-3xl max-w-5xl w-full h-[90vh] shadow-2xl flex flex-col overflow-hidden border-2 border-slate-700 relative">
+            <div className="p-4 bg-slate-900 text-white flex justify-between items-center pr-48">
               <div>
-                <span className="text-xs text-amber-400 font-bold uppercase">{activeMaterial.material.type}</span>
-                <h3 className="font-extrabold text-base">{activeMaterial.material.title}</h3>
+                <span className="text-xs text-amber-400 font-black uppercase tracking-wider">{activeMaterial.material.type}</span>
+                <h3 className="font-extrabold text-base text-slate-100">{activeMaterial.material.title}</h3>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={handleCompleteMaterial}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs shadow-md"
-                >
-                  ✓ ĐÁNH DẤU HOÀN THÀNH
-                </button>
-                <button
-                  onClick={() => setIsPlaying(false)}
-                  className="text-slate-400 hover:text-white font-bold text-lg px-2"
-                >
-                  ✕
-                </button>
-              </div>
+              <button
+                onClick={handleCompleteMaterial}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-5 py-2.5 rounded-2xl text-xs shadow-md border border-emerald-400 transition-all flex items-center space-x-1.5 active:scale-95 cursor-pointer"
+              >
+                <CheckCircle className="w-4 h-4" />
+                <span>ĐÁNH DẤU HOÀN THÀNH</span>
+              </button>
             </div>
 
             {/* Embedded Player */}
-            <div className="flex-1 bg-slate-950 flex items-center justify-center relative">
+            <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden">
               {activeMaterial.material.type === 'game_iframe' ? (
                 <iframe
                   src={activeMaterial.material.file_url}
@@ -432,7 +439,12 @@ export const StudentDashboard: React.FC = () => {
                   allowFullScreen
                 />
               ) : activeMaterial.material.type === 'video' ? (
-                <video src={activeMaterial.material.file_url} controls className="max-h-full max-w-full" />
+                <video
+                  src={activeMaterial.material.file_url}
+                  controls
+                  autoPlay
+                  className="max-h-full max-w-full rounded-xl shadow-2xl"
+                />
               ) : (
                 <iframe
                   src={activeMaterial.material.file_url}
