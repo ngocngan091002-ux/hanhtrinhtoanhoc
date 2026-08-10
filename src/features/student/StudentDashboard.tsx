@@ -406,10 +406,10 @@ export const StudentDashboard: React.FC = () => {
               }
               setIsPlaying(false);
             }}
-            className="fixed top-4 right-4 z-[10000] bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm px-5 py-3 rounded-2xl shadow-2xl border-2 border-white flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer uppercase tracking-wide"
+            className="fixed top-4 right-4 z-[10000] bg-rose-600 hover:bg-rose-700 text-white font-black text-xs sm:text-sm px-6 py-3.5 rounded-full shadow-2xl border-4 border-white flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer uppercase tracking-wide"
           >
-            <X className="w-5 h-5 text-white" />
-            <span>THOÁT VIDEO / ĐÓNG LẠI</span>
+            <X className="w-6 h-6 text-white" />
+            <span>QUAY TRỞ LẠI HỌC LIỆU</span>
           </button>
 
           <div className="bg-slate-900 rounded-3xl max-w-5xl w-full h-[90vh] shadow-2xl flex flex-col overflow-hidden border-2 border-slate-700 relative">
