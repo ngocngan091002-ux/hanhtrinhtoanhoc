@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { DailyTask, MathClass } from '../../types';
-import { CalendarCheck, Plus, Trash2, CheckCircle2, ListPlus } from 'lucide-react';
+import { CalendarCheck, Plus, Trash2, CheckCircle2, ListPlus, Trophy, Users } from 'lucide-react';
 
 interface DailyTaskManagerProps {
   currentClass?: MathClass | null;
@@ -22,6 +22,9 @@ export const DailyTaskManager: React.FC<DailyTaskManagerProps> = ({ currentClass
     'Trò chơi toán học nhanh 5 phút',
   ]);
 
+  const [totalStudents, setTotalStudents] = useState<number>(0);
+  const [taskCompletionStats, setTaskCompletionStats] = useState<Record<string, number>>({});
+
   useEffect(() => {
     if (currentClass) fetchDailyTasks();
   }, [currentClass]);
@@ -30,14 +33,71 @@ export const DailyTaskManager: React.FC<DailyTaskManagerProps> = ({ currentClass
     if (!currentClass) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // 1. Fetch total students in class
+      const { data: members } = await supabase
+        .from('class_members')
+        .select('student_id')
+        .eq('class_id', currentClass.id);
+
+      const totalSt = members?.length || 0;
+      setTotalStudents(totalSt);
+
+      // 2. Fetch tasks with items
+      const { data: tasksData, error: taskErr } = await supabase
         .from('daily_tasks')
         .select('*, items:daily_task_items(*)')
         .eq('class_id', currentClass.id)
         .order('task_date', { ascending: false });
 
-      if (error) throw error;
-      setTasks(data || []);
+      if (taskErr) throw taskErr;
+      const loadedTasks = tasksData || [];
+      setTasks(loadedTasks);
+
+      // 3. Calculate completion ratio per task (students who finished all items of the task)
+      if (loadedTasks.length > 0 && totalSt > 0) {
+        const itemIds = loadedTasks.flatMap((t: any) => (t.items || []).map((i: any) => i.id));
+
+        if (itemIds.length > 0) {
+          const { data: completions } = await supabase
+            .from('student_task_completions')
+            .select('task_item_id, student_id')
+            .in('task_item_id', itemIds);
+
+          const statsMap: Record<string, number> = {};
+
+          loadedTasks.forEach((t: any) => {
+            const taskItems = t.items || [];
+            if (taskItems.length === 0) {
+              statsMap[t.id] = 0;
+              return;
+            }
+            const taskItemIds = new Set(taskItems.map((i: any) => i.id));
+
+            // Group completions by student for this task
+            const studentCompletedItemsMap: Record<string, Set<string>> = {};
+            (completions || []).forEach((c: any) => {
+              if (taskItemIds.has(c.task_item_id)) {
+                if (!studentCompletedItemsMap[c.student_id]) {
+                  studentCompletedItemsMap[c.student_id] = new Set();
+                }
+                studentCompletedItemsMap[c.student_id].add(c.task_item_id);
+              }
+            });
+
+            // Count how many students completed ALL items of this task
+            let fullCompletedCount = 0;
+            Object.values(studentCompletedItemsMap).forEach((itemSet) => {
+              if (itemSet.size === taskItems.length) {
+                fullCompletedCount++;
+              }
+            });
+
+            statsMap[t.id] = fullCompletedCount;
+          });
+
+          setTaskCompletionStats(statsMap);
+        }
+      }
     } catch (err) {
       console.error('Error fetching daily tasks:', err);
     } finally {
@@ -152,42 +212,61 @@ export const DailyTaskManager: React.FC<DailyTaskManagerProps> = ({ currentClass
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tasks.map((task) => (
-            <div key={task.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100">
-                    Ngày: {task.task_date}
-                  </span>
-                  <h3 className="text-lg font-bold text-slate-900 mt-2 font-display">{task.title}</h3>
+          {tasks.map((task) => {
+            const completedCount = taskCompletionStats[task.id] || 0;
+            return (
+              <div key={task.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4 flex flex-col justify-between">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-100">
+                        Ngày: {task.task_date}
+                      </span>
+                      <h3 className="text-lg font-bold text-slate-900 mt-2 font-display">{task.title}</h3>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteTask(task.id)}
+                      className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                      title="Xóa nhiệm vụ"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Items List */}
+                  <div className="space-y-2 border-t border-slate-100 pt-3">
+                    {task.items && task.items.length > 0 ? (
+                      task.items.map((item, idx) => (
+                        <div key={item.id || idx} className="flex items-center space-x-2 text-sm text-slate-700">
+                          <div className="w-4 h-4 border-2 border-slate-300 rounded shrink-0 flex items-center justify-center">
+                            <span className="text-[10px] text-slate-400 font-bold">{idx + 1}</span>
+                          </div>
+                          <span>{item.title}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Không có mục con</span>
+                    )}
+                  </div>
                 </div>
 
-                <button
-                  onClick={() => handleDeleteTask(task.id)}
-                  className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="Xóa nhiệm vụ"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* 🎯 BOTTOM CORNER RATIO BADGE */}
+                <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs font-bold">
+                  <span className="text-slate-500 flex items-center space-x-1">
+                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Tiến độ lớp:</span>
+                  </span>
+                  <span className="bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200 flex items-center space-x-1 shadow-2xs font-extrabold">
+                    <Trophy className="w-3.5 h-3.5 text-emerald-600 fill-emerald-400" />
+                    <span>
+                      {completedCount}/{totalStudents} học sinh đã chinh phục
+                    </span>
+                  </span>
+                </div>
               </div>
-
-              {/* Items List */}
-              <div className="space-y-2 border-t border-slate-100 pt-3">
-                {task.items && task.items.length > 0 ? (
-                  task.items.map((item, idx) => (
-                    <div key={item.id || idx} className="flex items-center space-x-2 text-sm text-slate-700">
-                      <div className="w-4 h-4 border-2 border-slate-300 rounded shrink-0 flex items-center justify-center">
-                        <span className="text-[10px] text-slate-400 font-bold">{idx + 1}</span>
-                      </div>
-                      <span>{item.title}</span>
-                    </div>
-                  ))
-                ) : (
-                  <span className="text-xs text-slate-400 italic">Không có mục con</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
