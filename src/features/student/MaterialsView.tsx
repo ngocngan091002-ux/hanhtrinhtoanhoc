@@ -130,14 +130,6 @@ export const MaterialsView: React.FC = () => {
                 <span className="text-xs font-black text-amber-400 uppercase">{activeMedia.type}</span>
                 <h3 className="font-extrabold text-base text-slate-100">{activeMedia.title}</h3>
               </div>
-
-              <button
-                onClick={handleCloseMedia}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-black px-4 py-2 rounded-xl text-xs flex items-center space-x-1 border border-rose-400 cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-                <span>QUAY LẠI</span>
-              </button>
             </div>
 
             <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden">
