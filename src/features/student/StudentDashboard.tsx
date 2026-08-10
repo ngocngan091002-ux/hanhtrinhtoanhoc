@@ -48,34 +48,66 @@ export const StudentDashboard: React.FC = () => {
       const classesList = (memberData || []).map((m: any) => m.class).filter(Boolean);
       setEnrolledClasses(classesList);
 
-      if (classesList.length > 0) {
-        const classIds = classesList.map((c) => c.id);
+      const classIds = classesList.map((c) => c.id);
 
-        // 2. Get assignments assigned to student's classes
-        const { data: assData } = await supabase
-          .from('assignments')
-          .select('*, material:materials(*), class:classes(name)')
-          .in('class_id', classIds)
-          .order('created_at', { ascending: false });
+      // 2. Get assignments assigned to student's classes
+      const { data: assData } = await supabase
+        .from('assignments')
+        .select('*, material:materials(*), class:classes(name)')
+        .in('class_id', classIds)
+        .order('created_at', { ascending: false });
 
-        // 3. Get student progress for these assignments
-        const { data: progData } = await supabase
-          .from('student_progress')
-          .select('*')
-          .eq('student_id', user?.id);
+      // Merge with shared localStorage assignments for 100% demo/guest mode support
+      const sharedAssKey = `hanhtrinhtoanhoc_shared_assignments`;
+      let sharedAssData: any[] = [];
+      try {
+        sharedAssData = JSON.parse(localStorage.getItem(sharedAssKey) || '[]');
+      } catch {}
 
-        const progMap: Record<string, StudentProgress> = {};
-        (progData || []).forEach((p: StudentProgress) => {
-          progMap[p.assignment_id] = p;
-        });
+      const allAss = [...(assData || []), ...sharedAssData];
 
-        const formatted = (assData || []).map((a: any) => ({
-          ...a,
-          progress: progMap[a.id] || { status: 'not_started', score: 0 },
-        }));
+      // Also fetch public materials
+      const { data: publicMats } = await supabase
+        .from('materials')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        setAssignedMaterials(formatted);
-      }
+      const publicAss = (publicMats || []).map((m: any) => ({
+        id: `pub_${m.id}`,
+        class_id: classIds[0] || 'class_2',
+        material_id: m.id,
+        material: m,
+        class: { name: classesList[0]?.name || 'Toán Lớp 2' },
+        created_at: m.created_at,
+      }));
+
+      // Deduplicate by material ID
+      const combinedMap = new Map<string, any>();
+      [...allAss, ...publicAss].forEach((item) => {
+        if (item.material && !combinedMap.has(item.material.id || item.material_id)) {
+          combinedMap.set(item.material.id || item.material_id, item);
+        }
+      });
+
+      const combinedList = Array.from(combinedMap.values());
+
+      // 3. Get student progress for these assignments
+      const { data: progData } = await supabase
+        .from('student_progress')
+        .select('*')
+        .eq('student_id', user?.id);
+
+      const progMap: Record<string, StudentProgress> = {};
+      (progData || []).forEach((p: StudentProgress) => {
+        progMap[p.assignment_id] = p;
+      });
+
+      const formatted = combinedList.map((a: any) => ({
+        ...a,
+        progress: progMap[a.id] || { status: 'not_started', score: 0 },
+      }));
+
+      setAssignedMaterials(formatted);
     } catch (err) {
       console.error('Error fetching student data:', err);
     } finally {

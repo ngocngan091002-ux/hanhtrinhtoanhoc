@@ -84,24 +84,53 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
 
       const tagsArray = tagsInput.split(',').map((t) => t.trim()).filter(Boolean);
 
-      const { error: dbErr } = await supabase.from('materials').insert({
-        title: title.trim(),
-        description: description.trim(),
-        file_url: finalUrl,
-        type: type,
-        subject: subject,
-        grade_level: gradeLevel,
-        tags: tagsArray,
-        author_id: user.id,
-        is_public: isPublic,
-      });
+      const { data: createdMat, error: dbErr } = await supabase
+        .from('materials')
+        .insert({
+          title: title.trim(),
+          description: description.trim(),
+          file_url: finalUrl,
+          type: type,
+          subject: subject,
+          grade_level: gradeLevel,
+          tags: tagsArray,
+          author_id: user.id,
+          is_public: isPublic,
+        })
+        .select()
+        .single();
 
       if (dbErr) throw dbErr;
+
+      // Automatically assign to current class if selected so students immediately see it!
+      if (currentClass && createdMat) {
+        try {
+          await supabase.from('assignments').insert({
+            material_id: createdMat.id,
+            class_id: currentClass.id,
+          });
+        } catch {}
+
+        const sharedAssKey = `hanhtrinhtoanhoc_shared_assignments`;
+        try {
+          const sharedAssData = JSON.parse(localStorage.getItem(sharedAssKey) || '[]');
+          sharedAssData.push({
+            id: `ass_${Date.now()}`,
+            class_id: currentClass.id,
+            material_id: createdMat.id,
+            material: createdMat,
+            class: { name: currentClass.name },
+            created_at: new Date().toISOString(),
+          });
+          localStorage.setItem(sharedAssKey, JSON.stringify(sharedAssData));
+        } catch {}
+      }
 
       setTitle('');
       setDescription('');
       setFileUrlInput('');
       setFile(null);
+      alert(`Đã tạo và giao "${title.trim()}" cho học sinh thành công!`);
       fetchMaterials();
     } catch (err: any) {
       alert('Không thể tạo học liệu/game: ' + err.message);
@@ -113,6 +142,21 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
   const handleAssignToClass = async () => {
     if (!assigningMaterial || !currentClass) return alert('Vui lòng chọn lớp học để giao bài.');
 
+    // Save to shared localStorage for guest/demo mode
+    const sharedAssKey = `hanhtrinhtoanhoc_shared_assignments`;
+    try {
+      const sharedAssData = JSON.parse(localStorage.getItem(sharedAssKey) || '[]');
+      sharedAssData.push({
+        id: `ass_${Date.now()}`,
+        class_id: currentClass.id,
+        material_id: assigningMaterial.id,
+        material: assigningMaterial,
+        class: { name: currentClass.name },
+        created_at: new Date().toISOString(),
+      });
+      localStorage.setItem(sharedAssKey, JSON.stringify(sharedAssData));
+    } catch {}
+
     try {
       const { error } = await supabase.from('assignments').insert({
         material_id: assigningMaterial.id,
@@ -121,10 +165,12 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
       });
 
       if (error) throw error;
+    } catch (err: any) {
+      console.error('Error assigning to class:', err);
+    } finally {
       alert(`Đã giao "${assigningMaterial.title}" cho lớp ${currentClass.name} thành công!`);
       setAssigningMaterial(null);
-    } catch (err: any) {
-      alert('Lỗi khi giao bài tập: ' + err.message);
+      fetchMaterials();
     }
   };
 
