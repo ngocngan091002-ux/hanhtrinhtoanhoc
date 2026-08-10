@@ -138,7 +138,7 @@ export const MaterialsView: React.FC = () => {
                   src={activeMedia.file_url}
                   controls
                   autoPlay
-                  className="max-h-full max-w-full rounded-xl shadow-2xl"
+                  className="w-full h-full object-contain bg-black shadow-2xl"
                 />
               ) : activeMedia.type === 'game_iframe' ? (
                 <iframe

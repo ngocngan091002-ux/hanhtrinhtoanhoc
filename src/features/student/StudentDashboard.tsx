@@ -443,7 +443,7 @@ export const StudentDashboard: React.FC = () => {
                   src={activeMaterial.material.file_url}
                   controls
                   autoPlay
-                  className="max-h-full max-w-full rounded-xl shadow-2xl"
+                  className="w-full h-full object-contain bg-black shadow-2xl"
                 />
               ) : (
                 <iframe
