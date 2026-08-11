@@ -27,3 +27,11 @@ pnpm-debug.log*
 *.sw?
 .vscode/
 .idea/
+
+# Agent configuration & Agent rules
+.agent/
+.agent
+
+# Entry HTML file
+index.html
+
