@@ -1,23 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  * {
-    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
+  *, ::before, ::after {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif !important;
   }
 
-  body {
-    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
+  html, body {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif !important;
     color: #1e293b;
     background-color: #f8fafc;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-display {
-    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
-    letter-spacing: -0.01em;
+  h1, h2, h3, h4, h5, h6, input, button, select, textarea, .font-display, .font-sans {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif !important;
   }
 }
 
