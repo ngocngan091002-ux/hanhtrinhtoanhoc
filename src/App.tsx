@@ -5,6 +5,7 @@ import { AuthSelection } from './features/auth/AuthSelection';
 import { AdminDashboard } from './features/admin/AdminDashboard';
 import { TeacherDashboard } from './features/teacher/TeacherDashboard';
 import { StudentDashboard } from './features/student/StudentDashboard';
+import { MathAITutor } from './features/student/MathAITutor';
 import { Navbar } from './components/layout/Navbar';
 
 const LoginRoute: React.FC = () => {
@@ -80,11 +81,13 @@ const RootRedirect: React.FC = () => {
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative">
       <Navbar />
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         {children}
       </main>
+      {/* ADV-01: AI Chatbot Trợ Giảng Toán Lớp 2 */}
+      <MathAITutor />
       <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
         Hành Trình Toán Học © 2026 - Nền Tảng Giáo Dục & Game Tương Tác.
       </footer>

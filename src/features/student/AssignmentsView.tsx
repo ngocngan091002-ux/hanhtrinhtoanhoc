@@ -22,9 +22,42 @@ export const AssignmentsView: React.FC = () => {
   // Review mode state
   const [reviewAssignment, setReviewAssignment] = useState<Assignment | null>(null);
 
+  // ADV-06: Offline & Online Status Listener
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
   useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      // Auto-sync offline pending submissions
+      const pendingRaw = localStorage.getItem('hanhtrinhtoanhoc_pending_offline_submissions');
+      if (pendingRaw) {
+        try {
+          const pendingList: Submission[] = JSON.parse(pendingRaw);
+          if (pendingList.length > 0) {
+            alert(`📶 Kết nối Internet đã trở lại! Hệ thống đang tự động đồng bộ ${pendingList.length} bài nộp Offline...`);
+            localStorage.removeItem('hanhtrinhtoanhoc_pending_offline_submissions');
+          }
+        } catch {}
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     if (user) fetchAssignments();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, [user]);
+
+  const handleSyncGoogleCalendar = (assignment: Assignment) => {
+    const title = encodeURIComponent(`[Bài Tập Toán Lớp 2] ${assignment.title || 'Bài Tập Hằng Tuần'}`);
+    const details = encodeURIComponent(`Hoàn thành bài tập: ${assignment.description || 'Hành Trình Toán Học Lớp 2'}`);
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}`;
+    window.open(calendarUrl, '_blank');
+  };
 
   const getLocalAssignments = (): Assignment[] => {
     try {

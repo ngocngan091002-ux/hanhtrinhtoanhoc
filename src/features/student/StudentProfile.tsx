@@ -7,6 +7,7 @@ import { User, LogOut, ShieldCheck, Award, Zap, Target, BookOpen, Flame, Star, T
 export const StudentProfile: React.FC = () => {
   const { profile, user, signOut, refreshProfile } = useAuth();
 
+  const [showCertModal, setShowCertModal] = useState(false);
   const [realStats, setRealStats] = useState({
     tinhNham: 0,
     hinhHoc: 0,
@@ -302,6 +303,88 @@ export const StudentProfile: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* 🏆 ADV-07: CẤP CHỨNG CHỈ / BẰNG KHEN TOÁN HỌC TỰ ĐỘNG */}
+      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 p-6 sm:p-8 rounded-3xl text-white shadow-2xl border-4 border-amber-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span className="bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border border-white/30">
+            ADV-07: AUTOMATIC CERTIFICATE SYSTEM
+          </span>
+          <h3 className="text-2xl font-black font-display text-white mt-1">
+            Bằng Khen Danh Dự Toán Học Lớp 2 Xuất Sắc 🏆
+          </h3>
+          <p className="text-amber-100 text-xs sm:text-sm font-extrabold mt-0.5">
+            Tự động cấp Bằng khen chính thức khi em hoàn thành 100% nhiệm vụ & bài tập!
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            triggerConfetti();
+            setShowCertModal(true);
+          }}
+          className="bg-white text-amber-900 hover:bg-amber-50 font-black px-6 py-3 rounded-2xl text-xs shadow-xl active:scale-95 transition-all cursor-pointer shrink-0 border-2 border-amber-200"
+        >
+          🎓 NHẬN BẰNG KHEN TỰ ĐỘNG
+        </button>
+      </div>
+
+      {/* ADV-07 Certificate Modal */}
+      {showCertModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
+          <div className="bg-gradient-to-b from-amber-50 to-orange-100/90 rounded-3xl p-6 sm:p-8 max-w-2xl w-full border-8 border-amber-400 shadow-2xl space-y-6 text-center text-amber-950 relative">
+            <button
+              onClick={() => setShowCertModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+
+            {/* Official Certificate Design */}
+            <div className="border-4 border-dashed border-amber-400 p-6 rounded-2xl bg-white space-y-4 shadow-inner relative overflow-hidden">
+              <div className="text-4xl">🏆</div>
+              <span className="text-xs font-black uppercase text-amber-700 tracking-widest block">
+                BỘ GIÁO DỤC & ĐÀO TẠO — HÀNH TRÌNH TOÁN HỌC
+              </span>
+              <h2 className="text-3xl font-black font-display text-amber-900 tracking-wide uppercase">
+                BẰNG KHEN XUẤT SẮC
+              </h2>
+              <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">CHỨNG NHẬN TRAO CHO HỌC SINH</p>
+              
+              <div className="text-2xl sm:text-3xl font-black text-amber-600 font-display border-b-2 border-amber-300 pb-2 max-w-md mx-auto">
+                {profile?.full_name || 'Nguyễn Thị Ngọc Ngân'}
+              </div>
+
+              <p className="text-xs sm:text-sm font-extrabold text-slate-700 max-w-md mx-auto leading-relaxed">
+                Đã hoàn thành xuất sắc **100% Khóa Học Toán Lớp 2 Tương Tác** với thành tích vượt trội và tinh thần rèn luyện chăm chỉ.
+              </p>
+
+              <div className="pt-4 flex justify-between items-end text-xs font-bold text-slate-600">
+                <div className="text-left space-y-1">
+                  <div>Ngày cấp: {new Date().toLocaleDateString('vi-VN')}</div>
+                  <div className="text-[10px] text-amber-800 font-mono">Mã số: CERT-2026-MATH2</div>
+                </div>
+
+                <div className="text-center space-y-1">
+                  <div className="w-14 h-14 rounded-full bg-amber-500 text-white flex items-center justify-center font-black text-xs shadow-md border-2 border-amber-300 mx-auto">
+                    ĐÃ CẤP
+                  </div>
+                  <div className="text-[10px] uppercase font-black text-amber-900">Ban Đào Tạo Toán Lớp 2</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-center space-x-3">
+              <button
+                onClick={() => window.print()}
+                className="bg-amber-600 hover:bg-amber-700 text-white font-black px-6 py-2.5 rounded-xl text-xs shadow-md cursor-pointer"
+              >
+                🖨 IN BẰNG KHEN / LƯU PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 💬 3. KHUNG NHẬN XÉT CỬA SỔ MESSENGER MỀM MẠI */}
       <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100 space-y-4">

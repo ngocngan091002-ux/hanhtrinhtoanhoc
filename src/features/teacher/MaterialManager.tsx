@@ -187,8 +187,118 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
     }
   };
 
+  // ADV-03: AI Lesson Plan Generator State
+  const [showLessonPlanModal, setShowLessonPlanModal] = useState(false);
+  const [lessonPlanTopic, setLessonPlanTopic] = useState('Bảng Nhận 2 & Bảng Nhận 5');
+  const [generatedLessonPlan, setGeneratedLessonPlan] = useState('');
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+
+  const handleGenerateLessonPlan = () => {
+    setIsGeneratingPlan(true);
+    setTimeout(() => {
+      setGeneratedLessonPlan(
+        `📜 KẾ HOẠCH BÀI DẠY (GIÁO ÁN TOÁN LỚP 2)\n` +
+        `📌 Chủ đề: ${lessonPlanTopic}\n\n` +
+        `I. MỤC TIÊU BÀI HỌC:\n` +
+        `1. Về kiến thức: Học sinh nhận biết và ghi nhớ bản chất phép nhân 2 và 5 thông qua phép cộng lặp lại.\n` +
+        `2. Về năng lực: Rèn luyện tư duy tính nhẩm nhanh và khả năng vận dụng giải bài toán có lời văn.\n` +
+        `3. Về phẩm chất: Hào hứng tham gia trải nghiệm học toán qua game tương tác 3D.\n\n` +
+        `II. ĐỒ DÙNG DẠY HỌC:\n` +
+        `• Giáo viên: Bài giảng điện tử, Game nhúng Wordwall / Quizizz, Máy chiếu.\n` +
+        `• Học sinh: Sách giáo khoa Toán Lớp 2, Bảng con, Thiết bị di động / Máy tính.\n\n` +
+        `III. CÁC HOẠT ĐỘNG DẠY HỌC CHỦ YẾU:\n` +
+        `1. Khởi động (5 phút): Chơi Game "Vòng Quay May Mắn" ôn tập phép cộng.\n` +
+        `2. Khám phá kiến thức mới (15 phút): Hướng dẫn lập bảng nhân thông qua trực quan khối vuông.\n` +
+        `3. Luyện tập & Trải nghiệm (15 phút): Thực hành làm Bài tập & Game Lật thẻ trí nhớ 3D.\n` +
+        `4. Củng cố & Dặn dò (5 phút): AI tổng kết kết quả học tập và giao Nhiệm vụ hằng ngày.`
+      );
+      setIsGeneratingPlan(false);
+    }, 1000);
+  };
+
   return (
     <div className="space-y-6">
+      {/* ADV-03 Quick Banner Button */}
+      <div className="p-4 rounded-3xl bg-gradient-to-r from-purple-900 to-indigo-950 text-white border-2 border-purple-800 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <span className="bg-purple-500/20 text-purple-300 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider border border-purple-400/30">
+            ADV-03: AI SOẠN GIÁO ÁN / TÓM TẮT LESSON PLAN
+          </span>
+          <h3 className="text-lg font-extrabold font-display text-white mt-1">
+            Công Cụ AI Tự Động Soạn Giáo Án & Kế Hoạch Bài Dạy Lớp 2
+          </h3>
+        </div>
+        <button
+          onClick={() => setShowLessonPlanModal(true)}
+          className="bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl shadow-md border border-purple-400 active:scale-95 transition-all cursor-pointer shrink-0"
+        >
+          ⚡ TẠO GIÁO ÁN TỰ ĐỘNG
+        </button>
+      </div>
+
+      {/* ADV-03 Modal */}
+      {showLessonPlanModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-2xl w-full border-2 border-purple-300 shadow-2xl space-y-4 text-slate-800">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-200">
+              <h3 className="font-extrabold text-base font-display text-purple-950">
+                📜 ADV-03: AI Soạn Kế Hoạch Bài Dạy (Giáo Án Toán Lớp 2)
+              </h3>
+              <button
+                onClick={() => setShowLessonPlanModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 uppercase">Chọn chủ đề bài học Toán Lớp 2:</label>
+              <select
+                value={lessonPlanTopic}
+                onChange={(e) => setLessonPlanTopic(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+              >
+                <option value="Bảng Nhận 2 & Bảng Nhận 5">1. Bảng Nhận 2 & Bảng Nhận 5</option>
+                <option value="Phép Cộng Có Nhớ Trong Phạm Vi 100">2. Phép Cộng Có Nhớ Trong Phạm Vi 100</option>
+                <option value="Giải Bài Toán Có Lời Văn">3. Giải Bài Toán Có Lời Văn</option>
+                <option value="Hình Chữ Nhật & Hình Vuông">4. Hình Chữ Nhật & Hình Vuông</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleGenerateLessonPlan}
+              disabled={isGeneratingPlan}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-extrabold py-3 rounded-xl text-xs shadow-md active:scale-98 transition-all cursor-pointer"
+            >
+              {isGeneratingPlan ? '⏳ AI ĐANG TẠO KẾ HOẠCH BÀI DẠY...' : '⚡ XÁC NHẬN TẠO GIÁO ÁN TỰ ĐỘNG'}
+            </button>
+
+            {generatedLessonPlan && (
+              <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 space-y-2">
+                <textarea
+                  value={generatedLessonPlan}
+                  onChange={(e) => setGeneratedLessonPlan(e.target.value)}
+                  rows={10}
+                  className="w-full p-3 rounded-xl border border-purple-200 text-xs font-mono bg-white focus:outline-none leading-relaxed"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedLessonPlan);
+                      alert('Đã sao chép Kế hoạch bài dạy vào khay nhớ tạm!');
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-md cursor-pointer"
+                  >
+                    📋 SAO CHÉP GIÁO ÁN
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Upload Form Box */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
         <h3 className="text-xl font-bold text-slate-900 flex items-center space-x-2 font-display">

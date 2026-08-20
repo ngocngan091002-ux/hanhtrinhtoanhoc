@@ -1,0 +1,17 @@
+{
+  "short_name": "Toán Lớp 2",
+  "name": "Hành Trình Toán Học - Nền Tảng Học Toán Lớp 2 Tương Tác",
+  "description": "Ứng dụng học toán tương tác Lớp 2 kết hợp AI, Game 3D và Giám sát thời gian thực.",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📐</text></svg>",
+      "type": "image/svg+xml",
+      "sizes": "192x192 512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#f8fafc",
+  "theme_color": "#0284c7",
+  "display": "standalone",
+  "orientation": "portrait"
+}

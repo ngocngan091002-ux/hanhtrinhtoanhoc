@@ -3,7 +3,7 @@ import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
 import { Submission, MathClass, Assignment, Question } from '../../types';
 import { suggestGrading } from '../../config/gemini';
-import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award, Clock, Image as ImageIcon, Upload, X } from 'lucide-react';
+import { CheckCircle, Sparkles, User, FileCheck, AlertCircle, Award, Clock, Image as ImageIcon, Upload, X, Mic, MicOff, Volume2 } from 'lucide-react';
 
 interface GradingCenterProps {
   currentClass?: MathClass | null;
@@ -25,6 +25,46 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
   const [feedback, setFeedback] = useState<string>('');
   const [feedbackImage, setFeedbackImage] = useState<string>('');
   const [isGradingAI, setIsGradingAI] = useState(false);
+
+  // ADV-08: Voice Recording Feedback State
+  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
+  const [voiceAudioUrl, setVoiceAudioUrl] = useState<string>('');
+  const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const audioChunksRef = React.useRef<Blob[]>([]);
+
+  const startVoiceRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setVoiceAudioUrl(reader.result as string);
+        };
+        reader.readAsDataURL(blob);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecordingVoice(true);
+    } catch (err: any) {
+      alert('Không thể mở Microphone: ' + err.message);
+    }
+  };
+
+  const stopVoiceRecording = () => {
+    if (mediaRecorderRef.current && isRecordingVoice) {
+      mediaRecorderRef.current.stop();
+      setIsRecordingVoice(false);
+      mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
+    }
+  };
 
   useEffect(() => {
     fetchClassAssignments();
@@ -500,7 +540,7 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                     />
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 space-y-2">
                     <label className="block text-xs font-bold text-emerald-900 mb-1 uppercase">Nhận xét của Giáo viên:</label>
                     <input
                       type="text"
@@ -509,6 +549,36 @@ export const GradingCenter: React.FC<GradingCenterProps> = ({ currentClass }) =>
                       placeholder="Em làm bài rất tốt, phát huy nhé!"
                       className="w-full px-3 py-2.5 rounded-xl border border-emerald-300 text-sm font-bold bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none text-slate-800"
                     />
+
+                    {/* ADV-08: Voice Recording Controls */}
+                    <div className="flex items-center space-x-2 pt-1">
+                      {!isRecordingVoice ? (
+                        <button
+                          type="button"
+                          onClick={startVoiceRecording}
+                          className="bg-rose-100 hover:bg-rose-200 text-rose-800 font-extrabold text-xs px-3 py-1.5 rounded-xl border border-rose-300 flex items-center space-x-1.5 transition-all cursor-pointer shadow-2xs"
+                        >
+                          <Mic className="w-4 h-4 text-rose-600 animate-pulse" />
+                          <span>🎙️ ADV-08: Ghi Âm Lời Nói Nhận Xét</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={stopVoiceRecording}
+                          className="bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center space-x-1.5 transition-all cursor-pointer shadow-md animate-bounce"
+                        >
+                          <MicOff className="w-4 h-4 text-white" />
+                          <span>⏹ Dừng Ghi Âm (Đang Thu Lời Nói...)</span>
+                        </button>
+                      )}
+
+                      {voiceAudioUrl && (
+                        <div className="flex items-center space-x-2 bg-emerald-100 px-3 py-1 rounded-xl border border-emerald-300">
+                          <Volume2 className="w-4 h-4 text-emerald-700 animate-pulse" />
+                          <audio src={voiceAudioUrl} controls className="h-6 w-36" />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Feedback Image Attachment */}
