@@ -9,13 +9,14 @@ import { MaterialsView } from './MaterialsView';
 import { ResultsProgressView } from './ResultsProgressView';
 import { StudentLeaderboard } from './StudentLeaderboard';
 import { StudentProfile } from './StudentProfile';
+import { MathAITutor } from './MathAITutor';
 import { KidsMindHero } from '../../components/common/KidsMindHero';
 import { Home, CalendarCheck, BookOpenCheck, Gamepad2, BookOpen, Award, Trophy, User, PlusCircle, CheckCircle, Play, X } from 'lucide-react';
 
 export const StudentDashboard: React.FC = () => {
   const { profile, user } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    'home' | 'daily_tasks' | 'assignments' | 'games' | 'materials' | 'results' | 'leaderboard' | 'profile'
+    'home' | 'daily_tasks' | 'assignments' | 'games' | 'materials' | 'results' | 'leaderboard' | 'profile' | 'ai_tutor'
   >('home');
 
   // Student classes & assignments state
@@ -289,6 +290,16 @@ export const StudentDashboard: React.FC = () => {
           <User className="w-4 h-4" />
           <span>👤 Hồ Sơ</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('ai_tutor')}
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
+            activeTab === 'ai_tutor' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md font-extrabold' : 'bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100'
+          }`}
+        >
+          <span className="text-sm">🤖</span>
+          <span>ADV-01: AI Trợ Giảng</span>
+        </button>
       </div>
 
       {/* Render Active View */}
@@ -394,6 +405,29 @@ export const StudentDashboard: React.FC = () => {
       {activeTab === 'results' && <ResultsProgressView />}
       {activeTab === 'leaderboard' && <StudentLeaderboard />}
       {activeTab === 'profile' && <StudentProfile />}
+      {activeTab === 'ai_tutor' && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border-2 border-sky-300 shadow-xl space-y-4 text-slate-800">
+          <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+            <div className="w-12 h-12 rounded-2xl bg-sky-600 text-amber-300 flex items-center justify-center font-bold text-2xl shadow-md">
+              🤖
+            </div>
+            <div>
+              <span className="bg-sky-100 text-sky-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                ADV-01: AI TUTOR HUB
+              </span>
+              <h2 className="text-xl font-extrabold font-display text-slate-900">
+                Cô Trợ Giảng AI Toán Lớp 2 Thông Minh
+              </h2>
+            </div>
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Em có thể đặt bất kỳ câu hỏi nào về bài học Toán Lớp 2, nhờ cô giải thích từng bước hoặc gợi ý mẹo tính nhẩm nhanh! Khung chat nổi của cô cũng luôn sẵn sàng ở góc dưới bên phải màn hình.
+          </p>
+          <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200">
+            <MathAITutor />
+          </div>
+        </div>
+      )}
 
       {/* Interactive Game / Material Modal Player */}
       {isPlaying && activeMaterial && activeMaterial.material && (

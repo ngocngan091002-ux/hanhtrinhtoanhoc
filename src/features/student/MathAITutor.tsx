@@ -84,21 +84,21 @@ export const MathAITutor: React.FC = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white p-4 rounded-full shadow-2xl border-4 border-sky-200 flex items-center space-x-2.5 transition-all transform hover:scale-110 active:scale-95 group cursor-pointer"
+          className="fixed bottom-6 right-6 z-[99999] bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white p-4 rounded-full shadow-2xl border-4 border-amber-300 flex items-center space-x-2.5 transition-all transform hover:scale-110 active:scale-95 group cursor-pointer animate-pulse"
         >
           <div className="relative">
             <Bot className="w-7 h-7 text-amber-300 animate-bounce" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full"></span>
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></span>
           </div>
-          <span className="font-extrabold text-xs tracking-wide hidden sm:inline font-display">
-            ADV-01: AI TRỢ GIẢNG TOÁN LỚP 2
+          <span className="font-black text-xs tracking-wide hidden sm:inline font-display text-white drop-shadow-md">
+            🤖 ADV-01: AI TRỢ GIẢNG TOÁN LỚP 2
           </span>
         </button>
       )}
 
       {/* Floating Chat Drawer Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-3xl shadow-2xl border-2 border-sky-300 overflow-hidden flex flex-col h-[520px] transition-all animate-in fade-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-[99999] w-[calc(100vw-2rem)] sm:w-96 bg-white rounded-3xl shadow-2xl border-4 border-sky-400 overflow-hidden flex flex-col h-[540px] transition-all animate-in fade-in slide-in-from-bottom-5">
           {/* Header */}
           <div className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 p-4 text-white flex justify-between items-center shadow-md">
             <div className="flex items-center space-x-3">
