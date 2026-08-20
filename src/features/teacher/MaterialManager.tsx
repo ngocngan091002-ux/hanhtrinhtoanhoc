@@ -24,6 +24,7 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
   const [gradeLevel, setGradeLevel] = useState(2);
   const [tagsInput, setTagsInput] = useState('toán2, luyentap');
   const [isPublic, setIsPublic] = useState(false);
+  const [maxAttempts, setMaxAttempts] = useState(1);
 
   // Assignment Modal
   const [assigningMaterial, setAssigningMaterial] = useState<Material | null>(null);
@@ -96,6 +97,7 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
           tags: tagsArray,
           author_id: user.id,
           is_public: isPublic,
+          max_attempts: maxAttempts,
         })
         .select()
         .single();
@@ -217,42 +219,76 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
               >
                 <option value="document">📄 Tài liệu (PDF, DOCX, PPTX)</option>
                 <option value="video">🎥 Video Bài Giảng (MP4)</option>
-                <option value="game_iframe">🎮 Game Nhúng iFrame (Wordwall, Quizizz, Kahoot)</option>
-                <option value="game_html5">📦 Game HTML5 Packaged</option>
+                <option value="game_iframe">🎮 GAME-01: Game Nhúng iFrame (Wordwall, Quizizz, Kahoot, Canva, Genially)</option>
+                <option value="game_html5">📦 GAME-02: Upload Game HTML5 Packaged (.ZIP)</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Phạm vi chia sẻ:</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">GAME-06: Giới Hạn Lượt Chơi Tính Điểm:</label>
               <select
-                value={isPublic ? 'public' : 'private'}
-                onChange={(e) => setIsPublic(e.target.value === 'public')}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                value={maxAttempts}
+                onChange={(e) => setMaxAttempts(Number(e.target.value))}
+                className="w-full px-4 py-2.5 rounded-xl border border-sky-300 bg-sky-50 text-sky-900 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-extrabold"
               >
-                <option value="private">🔒 Dành riêng cho Lớp học</option>
-                <option value="public">🌐 Công khai toàn hệ thống</option>
+                <option value={1}>🎯 1 Lượt duy nhất (Tính điểm chính)</option>
+                <option value={3}>🎯 3 Lượt chơi tính điểm cao nhất</option>
+                <option value={5}>🎯 5 Lượt chơi tính điểm cao nhất</option>
+                <option value={0}>♾️ Không giới hạn lượt chơi</option>
               </select>
             </div>
           </div>
 
-          {/* Conditional Upload File vs URL iFrame */}
-          {type === 'game_iframe' ? (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Đường dẫn iFrame / URL nhúng game (Wordwall/Quizizz/Kahoot):</label>
-              <input
-                type="url"
-                value={fileUrlInput}
-                onChange={(e) => setFileUrlInput(e.target.value)}
-                placeholder="https://wordwall.net/embed/..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none font-mono"
-                required
-              />
+          {/* GAME-01 Preset URL formatting & iFrame Options */}
+          {type === 'game_iframe' && (
+            <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-3 shadow-md">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-xs font-extrabold text-amber-400 flex items-center gap-1.5 uppercase font-display">
+                  <Gamepad2 className="w-4 h-4" />
+                  <span>GAME-01: Nhúng Game Nền Tảng Ngoại (Wordwall, Quizizz, Kahoot, Canva, Genially)</span>
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { label: 'Wordwall', prefix: 'https://wordwall.net/embed/resource/' },
+                    { label: 'Quizizz', prefix: 'https://quizizz.com/embed/quiz/' },
+                    { label: 'Kahoot', prefix: 'https://create.kahoot.it/details/' },
+                    { label: 'Canva', prefix: 'https://www.canva.com/design/' },
+                    { label: 'Genially', prefix: 'https://view.genial.ly/' },
+                  ].map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setFileUrlInput(p.prefix)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-sky-600 text-slate-200 text-[10px] font-extrabold border border-slate-700 transition-all cursor-pointer"
+                    >
+                      +{p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <input
+                  type="url"
+                  value={fileUrlInput}
+                  onChange={(e) => setFileUrlInput(e.target.value)}
+                  placeholder="Dán đường dẫn iFrame / Embed URL tại đây (Ví dụ: https://wordwall.net/embed/resource/...)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-700 text-xs font-mono bg-slate-950 text-emerald-400 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                  required
+                />
+              </div>
             </div>
-          ) : (
+          )}
+
+          {/* Conditional Upload File vs URL iFrame */}
+          {type !== 'game_iframe' && (
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Chọn File tải lên Supabase Storage:</label>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
+                {type === 'game_html5' ? 'GAME-02: Tải lên File Game HTML5 (.ZIP) hoặc đính kèm tài liệu:' : 'Chọn File tải lên Supabase Storage:'}
+              </label>
               <input
                 type="file"
+                accept={type === 'game_html5' ? '.zip,.rar,.html,.htm' : '*'}
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer"
               />
@@ -274,7 +310,7 @@ export const MaterialManager: React.FC<MaterialManagerProps> = ({ currentClass }
             <button
               type="submit"
               disabled={uploading || !title}
-              className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center space-x-2"
+              className="bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md flex items-center space-x-2 cursor-pointer"
             >
               <UploadCloud className="w-4 h-4" />
               <span>{uploading ? 'Đang Xử Lý...' : 'Tạo Học Liệu / Game'}</span>

@@ -45,8 +45,35 @@ export interface Material {
   tags?: string[];
   author_id: string;
   is_public: boolean;
+  max_attempts?: number; // GAME-06: Giới hạn lượt chơi tính điểm (1, 3, 5, 0 = không giới hạn)
+  game_source?: 'wordwall' | 'quizizz' | 'kahoot' | 'canva' | 'genially' | 'html5_zip' | 'builtin' | 'custom_iframe';
   created_at: string;
   author?: UserProfile;
+}
+
+export interface GamePlayRecord {
+  id: string;
+  game_id: string;
+  student_id: string;
+  student_name: string;
+  avatar_url?: string;
+  score: number;
+  play_duration_seconds: number;
+  is_practice_mode: boolean;
+  attempt_number: number;
+  completed_at: string;
+}
+
+export interface GameFeedback {
+  id: string;
+  game_id: string;
+  student_id: string;
+  student_name: string;
+  avatar_url?: string;
+  likes_count?: number;
+  rating: 'easy' | 'normal' | 'hard';
+  comment?: string;
+  created_at: string;
 }
 
 export interface LearningMaterial {
