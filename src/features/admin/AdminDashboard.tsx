@@ -20,8 +20,17 @@ export const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       if (activeTab === 'users') {
+        // Auto purge demo accounts from database if present
+        try {
+          await supabase.from('profiles').delete().or('email.ilike.%demo%,full_name.ilike.%(Demo)%');
+        } catch (e) {}
+
         const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        setUsers(data || []);
+        // Filter out demo accounts
+        const cleanUsers = (data || []).filter(
+          (u) => !u.email?.includes('demo') && !u.full_name?.includes('(Demo)')
+        );
+        setUsers(cleanUsers);
       } else if (activeTab === 'classes') {
         const { data } = await supabase.from('classes').select('*, teacher:profiles(*)').order('created_at', { ascending: false });
         setClasses(data || []);
@@ -43,6 +52,17 @@ export const AdminDashboard: React.FC = () => {
       fetchAdminData();
     } catch (err: any) {
       alert('Không thể đổi quyền: ' + err.message);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, email: string) => {
+    if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${email}?`)) return;
+    try {
+      const { error } = await supabase.from('profiles').delete().eq('id', userId);
+      if (error) throw error;
+      fetchAdminData();
+    } catch (err: any) {
+      alert('Lỗi xóa người dùng: ' + err.message);
     }
   };
 
@@ -200,6 +220,13 @@ export const AdminDashboard: React.FC = () => {
                             <option value="teacher">teacher</option>
                             <option value="admin">admin</option>
                           </select>
+                          <button
+                            onClick={() => handleDeleteUser(u.id, u.email)}
+                            className="p-1 text-rose-600 hover:bg-rose-50 rounded-lg ml-2 cursor-pointer transition-colors"
+                            title="Xóa tài khoản"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}
