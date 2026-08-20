@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Send, Sparkles, X, MessageSquare, BookOpen, Lightbulb, FileText, Minimize2, ChevronUp } from 'lucide-react';
+import { Bot, Send, Sparkles, X, MessageSquare, Lightbulb, HelpCircle, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -15,7 +15,7 @@ export const MathAITutor: React.FC = () => {
     {
       id: '1',
       sender: 'bot',
-      text: 'Xin chào em! Cô Trợ Giảng AI Toán Lớp 2 đây 👋 Em có câu hỏi hay bài toán nào cần cô hướng dẫn từng bước không?',
+      text: 'Xin chào em! Cô Trợ Lý AI Toán Lớp 2 đây 👋\n\nCô ở đây để **giải thích kiến thức, gợi ý cách làm và đặt câu hỏi dẫn dắt** giúp em tự làm được bài toán. Cô **không làm bài thay** và **không chấm điểm**, người chấm điểm chính thức luôn là Thầy/Cô giáo của em nhé!',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -23,10 +23,10 @@ export const MathAITutor: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const quickPrompts = [
-    '💡 Hướng dẫn em giải phép nhân 5 × 4',
-    '📘 Tóm tắt cách làm bài toán có lời văn',
-    '📐 Hình chữ nhật khác hình vuông thế nào?',
-    '⚡ Mẹo tính nhẩm 15 - 7 cực nhanh',
+    '🧭 Gợi ý cách làm phép cộng có nhớ',
+    '❓ Đặt câu hỏi dẫn dắt bài toán lời văn',
+    '🤝 Em chưa hiểu bài toán nhân 5',
+    '📐 Phân biệt hình chữ nhật và hình vuông',
   ];
 
   useEffect(() => {
@@ -50,20 +50,24 @@ export const MathAITutor: React.FC = () => {
     if (!textToSend) setInputMessage('');
     setIsTyping(true);
 
-    // AI Grade 2 Math Tutor Response Logic
+    // Pedagogical Socratic AI Logic
     setTimeout(() => {
       let botReply = '';
+      const lower = text.toLowerCase();
 
-      if (text.includes('5 × 4') || text.includes('phép nhân')) {
-        botReply = '✨ **Phép nhân 5 × 4 nghĩa là:** lấy số 5 cộng lại 4 lần!\n👉 **Cách tính:** 5 + 5 + 5 + 5 = 20.\n🎉 Vậy **5 × 4 = 20** nhé em!';
-      } else if (text.includes('lời văn') || text.includes('bài toán')) {
-        botReply = '📘 **3 Bước Giải Bài Toán Có Lời Văn Lớp 2:**\n1️⃣ **Đọc kỹ đề bài:** Xem bài toán cho gì và hỏi gì.\n2️⃣ **Viết Tóm Tắt:** Ví dụ: Có 15 quả táo, cho 7 quả.\n3️⃣ **Viết Phép Tính & Đáp Số:** 15 - 7 = 8 (quả táo). Đáp số: 8 quả táo!';
-      } else if (text.includes('hình') || text.includes('vuông') || text.includes('chữ nhật')) {
-        botReply = '📐 **Bí quyết phân biệt:**\n• **Hình vuông:** Có 4 cạnh bằng nhau chằn chặn!\n• **Hình chữ nhật:** Có 2 cạnh dài bằng nhau và 2 cạnh ngắn bằng nhau.';
-      } else if (text.includes('15 - 7') || text.includes('tính nhẩm')) {
-        botReply = '⚡ **Mẹo tính nhẩm 15 - 7:**\n• Tách 7 thành 5 và 2.\n• Lấy 15 - 5 = 10.\n• Rồi lấy 10 - 2 = 8.\n👉 Vậy **15 - 7 = 8** rất dễ đúng không nào!';
+      // Rule check: Request for direct answer or solving homework
+      if (lower.includes('cho em đáp án') || lower.includes('giải hộ em') || lower.includes('đáp số là gì') || lower.includes('chấm điểm')) {
+        botReply = '🚫 **Cô không làm bài thay hay cho đáp án trực tiếp đâu nhé!**\n\n👉 Nhưng cô có thể hướng dẫn em cách suy luận:\n1️⃣ Em hãy đọc kỹ đề bài xem người ta **cho số nào** và **hỏi gì**?\n2️⃣ Phép tính này là **Cộng (thêm vào)** hay **Trừ (bớt đi)**?\n\nEm hãy thử trả lời 2 câu hỏi trên cho cô nghe nào!';
+      } else if (lower.includes('cộng có nhớ') || lower.includes('gợi ý cách làm')) {
+        botReply = '💡 **Gợi ý cách làm Phép Cộng Có Nhớ Lớp 2:**\n\n1️⃣ **Bước 1:** Cộng từ hàng đơn vị trước.\n2️⃣ **Bước 2:** Nếu kết quả $\ge 10$, em giữ lại hàng đơn vị và **nhớ 1** sang hàng chục.\n3️⃣ **Bước 3:** Cộng hàng chục và nhớ thêm 1 vào!\n\n❓ **Câu hỏi dẫn dắt:** Khi tính $18 + 5$, em lấy $8 + 5 = 13$, vậy em viết số mấy và nhớ số mấy nhỉ?';
+      } else if (lower.includes('lời văn') || lower.includes('dẫn dắt')) {
+        botReply = '❓ **Câu Hỏi Dẫn Dắt Giải Bài Toán Có Lời Văn:**\n\n• **Đề bài có từ "tất cả", "nhiều hơn", "thêm vào":** Em thử đoán xem nên chọn phép tính **Cộng (+)** hay **Trừ (-)**?\n• **Đề bài có từ "còn lại", "ít hơn", "bớt đi":** Em sẽ dùng phép tính nào?\n\nEm đang làm bài toán nào, gõ chữ đề bài ra cô cùng phân biệt với em nhé!';
+      } else if (lower.includes('chưa hiểu') || lower.includes('nhân 5')) {
+        botReply = '🤝 **Đừng lo lắng! Cô giải thích lại bản chất Phép Nhân 5 nhé:**\n\nPhép nhân $5 \\times 3$ thực chất là lấy số 5 **cộng lại 3 lần**:\n$$5 + 5 + 5 = 15$$\n\n❓ **Bây giờ em thử tính giúp cô:** $5 \\times 2$ tức là lấy số 5 cộng lại mấy lần nào?';
+      } else if (lower.includes('hình') || lower.includes('chữ nhật') || lower.includes('vuông')) {
+        botReply = '📐 **Giải thích kiến thức Hình Học Lớp 2:**\n\n• **Hình vuông:** Cả 4 cạnh bằng nhau như chiếc bánh chưng vuông!\n• **Hình chữ nhật:** Có 2 cạnh dài bằng nhau và 2 cạnh ngắn bằng nhau giống chiếc bảng lớp học.\n\n❓ Em hãy nhìn xung quanh xem đồ vật nào có hình chữ nhật nào?';
       } else {
-        botReply = `🤖 Cô Trợ Giảng AI đã đọc thắc mắc của em về "${text}":\n\nĐối với kiến thức Toán Lớp 2, em hãy luôn tách số tròn chục hoặc dùng sơ đồ hình ảnh để tính nhanh nhé! Em cần cô giải thích chi tiết hơn về ví dụ nào không?`;
+        botReply = `🤖 Cô Trợ Lý AI đã nhận được câu hỏi về "${text}":\n\n💡 **Gợi ý học tập:** Em hãy thử nêu phép tính hoặc từ chìa khóa đề bài toán Lớp 2. Cô sẽ đặt câu hỏi gợi ý từng bước để em tự tìm ra câu trả lời chính xác nhất nhé!`;
       }
 
       const botMsg: ChatMessage = {
@@ -91,7 +95,7 @@ export const MathAITutor: React.FC = () => {
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white rounded-full"></span>
           </div>
           <span className="font-black text-xs tracking-wide hidden sm:inline font-display text-white drop-shadow-md">
-            🤖 ADV-01: AI TRỢ GIẢNG TOÁN LỚP 2
+            🤖 AI TRỢ LÝ TOÁN HỌC
           </span>
         </button>
       )}
@@ -107,9 +111,9 @@ export const MathAITutor: React.FC = () => {
               </div>
               <div>
                 <span className="bg-emerald-400 text-slate-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                  ADV-01: AI TRỢ GIẢNG LỚP 2
+                  SƯ PHẠM DẪN DẮT LỚP 2
                 </span>
-                <h4 className="font-extrabold text-sm font-display text-white">Cô Trợ Giảng Toán Học 🤖</h4>
+                <h4 className="font-extrabold text-sm font-display text-white">AI Trợ Lý Toán Học 🤖</h4>
               </div>
             </div>
 
@@ -121,6 +125,12 @@ export const MathAITutor: React.FC = () => {
             </button>
           </div>
 
+          {/* AI Rules Banner */}
+          <div className="bg-amber-50 p-2 px-3 border-b border-amber-200 text-[11px] text-amber-900 font-extrabold flex items-center space-x-1.5">
+            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>AI không làm bài thay & không tự chấm điểm</span>
+          </div>
+
           {/* Messages Area */}
           <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/60 text-xs">
             {messages.map((msg) => (
@@ -129,7 +139,7 @@ export const MathAITutor: React.FC = () => {
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl shadow-xs space-y-1 ${
+                  className={`max-w-[88%] p-3.5 rounded-2xl shadow-xs space-y-1 ${
                     msg.sender === 'user'
                       ? 'bg-sky-600 text-white font-medium rounded-br-none'
                       : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none font-sans'
@@ -151,7 +161,7 @@ export const MathAITutor: React.FC = () => {
               <div className="flex justify-start">
                 <div className="bg-white border border-slate-200 p-3 rounded-2xl text-slate-500 font-bold flex items-center space-x-2 text-xs">
                   <div className="w-2 h-2 bg-sky-500 rounded-full animate-ping"></div>
-                  <span>Cô Trợ Giảng AI đang suy nghĩ câu trả lời...</span>
+                  <span>Cô AI đang đặt câu hỏi dẫn dắt...</span>
                 </div>
               </div>
             )}
@@ -178,7 +188,7 @@ export const MathAITutor: React.FC = () => {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-              placeholder="Hỏi cô bài toán hay thắc mắc..."
+              placeholder="Hỏi cô cách suy luận hay thắc mắc..."
               className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"
             />
             <button

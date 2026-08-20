@@ -221,6 +221,19 @@ export const StudentDashboard: React.FC = () => {
           <span>🏠 Trang Chủ</span>
         </button>
 
+        {/* 🤖 POSITION 2: AI TRỢ LÝ TOÁN HỌC (SƯ PHẠM DẪN DẮT) */}
+        <button
+          onClick={() => setActiveTab('ai_tutor')}
+          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-extrabold text-xs transition-all shrink-0 border border-amber-300 ${
+            activeTab === 'ai_tutor'
+              ? 'bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 text-white shadow-lg ring-2 ring-amber-300'
+              : 'bg-gradient-to-r from-sky-500 to-indigo-600 text-white hover:brightness-110 shadow-sm animate-pulse'
+          }`}
+        >
+          <span className="text-base animate-bounce">🤖</span>
+          <span>AI Trợ Lý Toán Học</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('daily_tasks')}
           className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
@@ -289,16 +302,6 @@ export const StudentDashboard: React.FC = () => {
         >
           <User className="w-4 h-4" />
           <span>👤 Hồ Sơ</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('ai_tutor')}
-          className={`flex items-center space-x-2 px-3.5 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
-            activeTab === 'ai_tutor' ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md font-extrabold' : 'bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100'
-          }`}
-        >
-          <span className="text-sm">🤖</span>
-          <span>ADV-01: AI Trợ Giảng</span>
         </button>
       </div>
 
