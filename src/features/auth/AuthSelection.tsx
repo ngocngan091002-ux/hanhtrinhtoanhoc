@@ -132,6 +132,21 @@ export const AuthSelection: React.FC = () => {
         <p className="mt-3 text-lg text-slate-600 max-w-md mx-auto">
           Hệ thống giáo dục thông minh dành cho Giáo viên & Học sinh.
         </p>
+
+        {/* ADV-01 Quick Trigger Banner on Login Screen */}
+        <div className="mt-4 flex justify-center">
+          <button
+            type="button"
+            onClick={() => {
+              const aiBtn = document.querySelector('button[class*="z-\\[99999\\]"]') as HTMLButtonElement;
+              if (aiBtn) aiBtn.click();
+            }}
+            className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-full shadow-lg border-2 border-amber-300 flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
+          >
+            <span className="text-base animate-bounce">🤖</span>
+            <span>ADV-01: BẤM TRẢI NGHIỆM TRỢ LÝ AI TRỢ GIẢNG</span>
+          </button>
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">

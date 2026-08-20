@@ -100,8 +100,21 @@ export const Navbar: React.FC = () => {
           </div>
         )}
 
-        {/* Right User Info & Google Avatar */}
+        {/* Right User Info & Google Avatar & AI Tutor Trigger */}
         <div className="flex items-center space-x-2 sm:space-x-4">
+          <button
+            onClick={() => {
+              // Trigger floating AI chatbot window open event
+              const aiBtn = document.querySelector('button[class*="z-\\[99999\\]"]') as HTMLButtonElement;
+              if (aiBtn) aiBtn.click();
+              else navigate('/student');
+            }}
+            className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-md flex items-center space-x-1.5 transition-all border border-amber-300 active:scale-95 cursor-pointer"
+          >
+            <span className="animate-bounce">🤖</span>
+            <span>Trợ Lý AI</span>
+          </button>
+
           <div className="flex items-center space-x-2 text-right">
             {profile.avatar_url ? (
               <img

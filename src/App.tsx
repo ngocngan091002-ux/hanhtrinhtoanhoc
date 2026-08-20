@@ -137,6 +137,9 @@ export default function App() {
 
           <Route path="*" element={<RootRedirect />} />
         </Routes>
+
+        {/* ADV-01: AI Chatbot Trợ Giảng Toán Lớp 2 (Luôn hiển thị trên mọi màn hình) */}
+        <MathAITutor />
       </BrowserRouter>
     </AuthProvider>
   );
