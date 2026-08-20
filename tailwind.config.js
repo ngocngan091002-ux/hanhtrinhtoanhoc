@@ -19,8 +19,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Nunito', 'sans-serif'],
-        display: ['Outfit', 'sans-serif'],
+        sans: ['"Be Vietnam Pro"', 'Nunito', 'system-ui', 'sans-serif'],
+        display: ['"Be Vietnam Pro"', 'Nunito', 'system-ui', 'sans-serif'],
       }
     },
   },

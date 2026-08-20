@@ -3,14 +3,21 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    font-family: 'Nunito', sans-serif;
-    color: #1e293b;
-    background-color: #f8fafc;
+  * {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
+  body {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
+    color: #1e293b;
+    background-color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Be Vietnam Pro', 'Nunito', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
