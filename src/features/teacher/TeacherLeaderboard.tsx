@@ -63,18 +63,13 @@ export const TeacherLeaderboard: React.FC<TeacherLeaderboardProps> = ({ currentC
         map[studentId].completed_tasks_count += 1;
       });
 
-      let list = Object.values(map).sort((a, b) => b.total_score - a.total_score);
-
-      // If no data exists yet, provide realistic active class leaderboard
-      if (list.length === 0) {
-        list = [
-          { student_id: 's1', student_name: 'Nguyễn Thị Ngọc Ngân', total_score: 100, completed_tasks_count: 5, total_assignments_done: 4 },
-          { student_id: 's2', student_name: 'Nguyễn Văn Minh An', total_score: 95, completed_tasks_count: 4, total_assignments_done: 4 },
-          { student_id: 's3', student_name: 'Trần Thị Thu Hà', total_score: 85, completed_tasks_count: 4, total_assignments_done: 3 },
-          { student_id: 's4', student_name: 'Lê Hoàng Nam', total_score: 75, completed_tasks_count: 3, total_assignments_done: 3 },
-          { student_id: 's5', student_name: 'Phạm Đức Bảo', total_score: 70, completed_tasks_count: 3, total_assignments_done: 2 },
-        ];
-      }
+      // Filter out dummy/fake student names from any view or legacy records
+      let list = Object.values(map)
+        .filter((item) => {
+          const name = item.student_name || '';
+          return !['Nguyễn Văn Minh An', 'Trần Thị Thu Hà', 'Lê Hoàng Nam', 'Phạm Đức Bảo'].includes(name) && !['s2', 's3', 's4', 's5'].includes(item.student_id);
+        })
+        .sort((a, b) => b.total_score - a.total_score);
 
       setLeaderboard(list);
     } catch (err) {
