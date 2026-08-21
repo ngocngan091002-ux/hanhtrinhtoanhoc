@@ -2,6 +2,9 @@
 
 Hệ thống quản lý học tập & luyện tập toán tiểu học tương tác kết hợp AI dành riêng cho **Giáo viên** và **Học sinh tiểu học**.
 
+- **Website Vercel Production**: [https://hanhtrinhtoanhoccuaem.vercel.app/](https://hanhtrinhtoanhoccuaem.vercel.app/)
+- **Repository GitHub**: [https://github.com/ngocngan091002-ux/hanhtrinhtoanhoc](https://github.com/ngocngan091002-ux/hanhtrinhtoanhoc)
+
 ---
 
 ## 🚀 Công Nghệ Sử Dụng
