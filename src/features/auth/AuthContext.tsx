@@ -125,14 +125,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else if (data) {
         // Profile exists -> Preserve existing role & learning data!
+        const isMasterAdmin = data.email?.includes('ngocngan091002@gmail.com');
+        const effectiveRole = isMasterAdmin ? 'admin' : data.role;
+
         const googleAvatar = currentUser?.user_metadata?.avatar_url || currentUser?.user_metadata?.picture;
         if (googleAvatar && !data.avatar_url) {
           try {
-            await supabase.from('profiles').update({ avatar_url: googleAvatar }).eq('id', userId);
+            await supabase.from('profiles').update({ avatar_url: googleAvatar, role: effectiveRole }).eq('id', userId);
             data.avatar_url = googleAvatar;
           } catch (e) {}
         }
-        setProfile({ ...data, grade_level: data.grade_level || 2 } as UserProfile);
+        setProfile({ ...data, role: effectiveRole, grade_level: data.grade_level || 2 } as UserProfile);
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -188,12 +191,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loginAsGuest = async (fullName: string, role: UserRole, customEmail?: string) => {
     const guestId = generateUUID();
     const email = customEmail || `${role}_${Math.floor(Math.random() * 1000)}@hanhtrinhtoanhoc.edu.vn`;
+    const isMasterAdmin = email.includes('ngocngan091002@gmail.com');
+    const effectiveRole: UserRole = isMasterAdmin ? 'admin' : role;
 
     const guestProfile: UserProfile = {
       id: guestId,
       email: email,
-      full_name: fullName || (role === 'teacher' ? 'Giáo Viên' : role === 'admin' ? 'Quản Trị Viên' : 'Học Sinh'),
-      role: role,
+      full_name: fullName || (effectiveRole === 'teacher' ? 'Giáo Viên' : effectiveRole === 'admin' ? 'Quản Trị Viên' : 'Học Sinh'),
+      role: effectiveRole,
       grade_level: 2,
       created_at: new Date().toISOString(),
     };
@@ -203,7 +208,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: email,
       user_metadata: {
         full_name: guestProfile.full_name,
-        role: role,
+        role: effectiveRole,
       },
     };
 
@@ -224,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setUser(guestUser);
     setProfile(guestProfile);
-    setSelectedRole(role);
+    setSelectedRole(effectiveRole);
     setLoading(false);
   };
 
