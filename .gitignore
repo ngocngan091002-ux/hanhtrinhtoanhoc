@@ -32,6 +32,3 @@ pnpm-debug.log*
 .agent/
 .agent
 
-# Entry HTML file
-index.html
-
