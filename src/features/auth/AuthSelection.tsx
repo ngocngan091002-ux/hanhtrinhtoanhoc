@@ -153,34 +153,47 @@ export const AuthSelection: React.FC = () => {
         {/* Auth Box */}
         <div className="bg-white/90 backdrop-blur-md py-8 px-6 shadow-xl rounded-3xl sm:px-10 border border-slate-100">
           
-          {/* Role selection pills (Học Sinh & Giáo Viên) */}
+          {/* Role selection pills (Học Sinh, Giáo Viên, Quản Trị Viên) */}
           <div className="mb-6">
             <label className="block text-xs font-bold text-slate-500 uppercase text-center mb-3">Chọn vai trò hệ thống:</label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleRoleSelect('student')}
-                className={`py-3 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 ${
+                className={`py-2.5 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 cursor-pointer ${
                   selectedRole === 'student'
                     ? 'border-amber-500 bg-amber-50 text-amber-900 shadow-sm ring-2 ring-amber-500/20'
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <GraduationCap className="w-6 h-6 text-amber-600" />
+                <GraduationCap className="w-5 h-5 text-amber-600" />
                 <span>👨‍🎓 Học Sinh</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => handleRoleSelect('teacher')}
-                className={`py-3 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 ${
+                className={`py-2.5 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 cursor-pointer ${
                   selectedRole === 'teacher'
                     ? 'border-sky-500 bg-sky-50 text-sky-900 shadow-sm ring-2 ring-sky-500/20'
                     : 'border-slate-200 hover:bg-slate-50 text-slate-600'
                 }`}
               >
-                <School className="w-6 h-6 text-sky-600" />
+                <School className="w-5 h-5 text-sky-600" />
                 <span>👩‍🏫 Giáo Viên</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleRoleSelect('admin')}
+                className={`py-2.5 px-2 rounded-2xl border text-center font-bold text-xs transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                  selectedRole === 'admin'
+                    ? 'border-slate-900 bg-slate-900 text-white shadow-sm ring-2 ring-slate-900/20'
+                    : 'border-slate-200 hover:bg-slate-50 text-slate-600'
+                }`}
+              >
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <span>🛡️ Quản Trị</span>
               </button>
             </div>
           </div>

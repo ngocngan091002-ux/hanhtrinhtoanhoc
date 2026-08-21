@@ -41,64 +41,48 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Portal Switcher for Admin / Teacher (Desktop) */}
-        {(isAdmin || isTeacher) && (
-          <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl space-x-1 border border-slate-200">
-            {isTeacher && (
-              <button
-                onClick={() => navigate('/teacher')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 ${
-                  location.pathname.startsWith('/teacher')
-                    ? 'bg-sky-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <School className="w-3.5 h-3.5" />
-                <span>Cổng Giáo Viên</span>
-              </button>
-            )}
-
-            {isAdmin && (
-              <>
-                <button
-                  onClick={() => navigate('/teacher')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 ${
-                    location.pathname.startsWith('/teacher')
-                      ? 'bg-sky-600 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <School className="w-3.5 h-3.5" />
-                  <span>Cổng Giáo Viên</span>
-                </button>
-
-                <button
-                  onClick={() => navigate('/admin')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 ${
-                    location.pathname.startsWith('/admin')
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Trang Quản Trị</span>
-                </button>
-              </>
-            )}
-
+        {/* Portal Switcher for Admin / Teacher / Student */}
+        <div className="hidden md:flex items-center bg-slate-100 p-1 rounded-xl space-x-1 border border-slate-200">
+          {isAdmin && (
             <button
-              onClick={() => navigate('/student')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 ${
-                location.pathname.startsWith('/student')
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+              onClick={() => navigate('/admin')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                location.pathname.startsWith('/admin')
+                  ? 'bg-slate-900 text-emerald-300 shadow-md border border-slate-700 ring-2 ring-emerald-400/20'
+                  : 'text-slate-700 hover:text-slate-900 hover:bg-white'
               }`}
             >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Góc Học Sinh</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>🛡️ Cổng Quản Trị Viên</span>
             </button>
-          </div>
-        )}
+          )}
+
+          {(isAdmin || isTeacher) && (
+            <button
+              onClick={() => navigate('/teacher')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+                location.pathname.startsWith('/teacher')
+                  ? 'bg-sky-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+              }`}
+            >
+              <School className="w-3.5 h-3.5" />
+              <span>🏫 Cổng Giáo Viên</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => navigate('/student')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+              location.pathname.startsWith('/student')
+                ? 'bg-amber-500 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+            }`}
+          >
+            <GraduationCap className="w-3.5 h-3.5" />
+            <span>🎓 Góc Học Sinh</span>
+          </button>
+        </div>
 
         {/* Right User Info & Google Avatar & AI Tutor Trigger */}
         <div className="flex items-center space-x-2 sm:space-x-4">
@@ -135,7 +119,7 @@ export const Navbar: React.FC = () => {
 
           <button
             onClick={signOut}
-            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center space-x-1 text-xs font-bold"
+            className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors flex items-center space-x-1 text-xs font-bold cursor-pointer"
             title="Đăng xuất khỏi hệ thống"
           >
             <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -145,63 +129,47 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* 📱 MOBILE PORTAL SWITCHER BAR (ALWAYS ACCESSIBLE ON PHONES) */}
-      {(isAdmin || isTeacher) && (
-        <div className="flex md:hidden bg-slate-100 p-1.5 border-t border-slate-200 overflow-x-auto gap-1.5 px-3">
-          {isTeacher && (
-            <button
-              onClick={() => navigate('/teacher')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
-                location.pathname.startsWith('/teacher')
-                  ? 'bg-sky-600 text-white shadow-sm'
-                  : 'text-slate-700 bg-white border border-slate-200'
-              }`}
-            >
-              <School className="w-3.5 h-3.5" />
-              <span>Cổng Giáo Viên</span>
-            </button>
-          )}
-
-          {isAdmin && (
-            <>
-              <button
-                onClick={() => navigate('/teacher')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
-                  location.pathname.startsWith('/teacher')
-                    ? 'bg-sky-600 text-white shadow-sm'
-                    : 'text-slate-700 bg-white border border-slate-200'
-                }`}
-              >
-                <School className="w-3.5 h-3.5" />
-                <span>Cổng Giáo Viên</span>
-              </button>
-
-              <button
-                onClick={() => navigate('/admin')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
-                  location.pathname.startsWith('/admin')
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-700 bg-white border border-slate-200'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Trang Quản Trị</span>
-              </button>
-            </>
-          )}
-
+      <div className="flex md:hidden bg-slate-100 p-1.5 border-t border-slate-200 overflow-x-auto gap-1.5 px-3 scrollbar-none">
+        {isAdmin && (
           <button
-            onClick={() => navigate('/student')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
-              location.pathname.startsWith('/student')
-                ? 'bg-amber-500 text-white shadow-sm'
+            onClick={() => navigate('/admin')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all flex items-center space-x-1 shrink-0 ${
+              location.pathname.startsWith('/admin')
+                ? 'bg-slate-900 text-emerald-300 shadow-sm'
                 : 'text-slate-700 bg-white border border-slate-200'
             }`}
           >
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>Góc Học Sinh</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+            <span>🛡️ Quản Trị Viên</span>
           </button>
-        </div>
-      )}
+        )}
+
+        {(isAdmin || isTeacher) && (
+          <button
+            onClick={() => navigate('/teacher')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
+              location.pathname.startsWith('/teacher')
+                ? 'bg-sky-600 text-white shadow-sm'
+                : 'text-slate-700 bg-white border border-slate-200'
+            }`}
+          >
+            <School className="w-3.5 h-3.5" />
+            <span>Cổng Giáo Viên</span>
+          </button>
+        )}
+
+        <button
+          onClick={() => navigate('/student')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1 shrink-0 ${
+            location.pathname.startsWith('/student')
+              ? 'bg-amber-500 text-white shadow-sm'
+              : 'text-slate-700 bg-white border border-slate-200'
+          }`}
+        >
+          <GraduationCap className="w-3.5 h-3.5" />
+          <span>Góc Học Sinh</span>
+        </button>
+      </div>
     </header>
   );
 };
