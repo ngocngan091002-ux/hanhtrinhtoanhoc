@@ -133,18 +133,27 @@ export const AuthSelection: React.FC = () => {
           Hệ thống giáo dục thông minh dành cho Giáo viên & Học sinh.
         </p>
 
-        {/* ADV-01 Quick Trigger Banner on Login Screen */}
-        <div className="mt-4 flex justify-center">
+        {/* ADV-01 Quick Trigger Banner & Direct Admin Entry */}
+        <div className="mt-4 flex flex-col items-center justify-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => loginAsGuest('Nguyễn Thị Ngọc Ngân', 'admin', 'ngocngan091002@gmail.com')}
+            className="bg-slate-900 hover:bg-slate-800 text-emerald-300 font-extrabold text-xs sm:text-sm px-6 py-3 rounded-2xl shadow-xl border-2 border-emerald-400 flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer ring-4 ring-emerald-500/20"
+          >
+            <ShieldCheck className="w-5 h-5 text-emerald-400 animate-pulse" />
+            <span>⚡ VÀO THẲNG WEB NGAY (QUYỀN ADMIN)</span>
+          </button>
+
           <button
             type="button"
             onClick={() => {
               const aiBtn = document.querySelector('button[class*="z-\\[99999\\]"]') as HTMLButtonElement;
               if (aiBtn) aiBtn.click();
             }}
-            className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-extrabold text-xs px-5 py-2.5 rounded-full shadow-lg border-2 border-amber-300 flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer animate-pulse"
+            className="bg-gradient-to-r from-sky-600 via-blue-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-extrabold text-xs px-5 py-2 rounded-full shadow-md border border-amber-300 flex items-center space-x-2 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
           >
             <span className="text-base animate-bounce">🤖</span>
-            <span>ADV-01: BẤM TRẢI NGHIỆM TRỢ LÝ AI TRỢ GIẢNG</span>
+            <span>ADV-01: TRẢI NGHIỆM TRỢ LÝ AI TRỢ GIẢNG</span>
           </button>
         </div>
       </div>
