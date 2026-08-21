@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../config/supabase';
 import { useAuth } from '../auth/AuthContext';
-import { MathClass, ClassMember } from '../../types';
+import { MathClass, ClassMember, UserProfile } from '../../types';
 import { Users, Plus, UserPlus, Copy, Check, School, Trash2, FileSpreadsheet, Download, Upload } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 interface ClassManagementProps {
   onSelectClass?: (cls: MathClass) => void;
@@ -20,8 +19,8 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
   const [selectedClass, setSelectedClass] = useState<ActiveClassWithCount | null>(null);
   const [members, setMembers] = useState<ClassMember[]>([]);
   const [studentEmail, setStudentEmail] = useState('');
-  const [excelContent, setExcelContent] = useState('');
-  const [showExcelImport, setShowExcelImport] = useState(false);
+  const [csvContent, setCsvContent] = useState('');
+  const [showCsvImport, setShowCsvImport] = useState(false);
   const [addMessage, setAddMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -81,6 +80,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
     e.preventDefault();
     if (!className.trim() || !user) return;
 
+    // Generate random 6-character unique join code
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     try {
@@ -199,108 +199,88 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
       .toLowerCase();
   };
 
-  const parseAllStudents = (content: string, classCode: string) => {
-    const cleanContent = content.replace(/^\uFEFF/, '').trim();
-    if (!cleanContent) return [];
+  const parseStudentLine = (line: string, classCode: string, lineIndex: number) => {
+    const cleanLine = line.replace(/^\uFEFF/, '').trim();
+    if (!cleanLine || cleanLine.toLowerCase().startsWith('sep=')) return null;
 
-    const sanitized = cleanContent.replace(/\[([^\]]+)\]\(mailto:[^)]+\)/g, '$1');
+    // Split by comma, semicolon, tab, or 2+ consecutive spaces (from Excel paste)
+    const parts = cleanLine
+      .split(/[,;\t]|\s{2,}/)
+      .map((p) => p.trim().replace(/^["']|["']$/g, ''))
+      .filter(Boolean);
 
-    const rawLines = sanitized
-      .split('\n')
-      .map((l) => l.trim().replace(/^["']|["']$/g, ''))
-      .filter((l) => l.length > 0 && !l.toLowerCase().startsWith('sep='));
+    if (parts.length === 0) return null;
 
-    const results: { fullName: string; email: string; password?: string }[] = [];
-
-    let isVertical3LineFormat = false;
-    if (rawLines.length >= 3 && !rawLines[0].includes('@') && rawLines[1].includes('@')) {
-      let atCountInSecondLines = 0;
-      for (let i = 1; i < Math.min(rawLines.length, 15); i += 3) {
-        if (rawLines[i] && rawLines[i].includes('@')) atCountInSecondLines++;
-      }
-      if (atCountInSecondLines >= 2) {
-        isVertical3LineFormat = true;
-      }
+    const combined = parts.join(' ').toLowerCase();
+    if (
+      combined.includes('họ và tên') ||
+      combined.includes('họ tên') ||
+      combined.includes('stt') ||
+      combined.includes('tên học sinh') ||
+      combined.includes('email học sinh')
+    ) {
+      return null;
     }
 
-    if (isVertical3LineFormat) {
-      for (let i = 0; i < rawLines.length; i += 3) {
-        const name = rawLines[i];
-        const emailLine = rawLines[i + 1] || '';
-        const email = emailLine.includes('@') ? emailLine.toLowerCase() : '';
-        const pass = rawLines[i + 2] || '123456';
-        if (name && email) {
-          results.push({ fullName: name, email, password: pass });
-        }
-      }
-      return results;
-    }
+    let email = '';
+    let fullName = '';
+    let password = '123456';
 
-    for (let i = 0; i < rawLines.length; i++) {
-      const line = rawLines[i];
-      const parts = line
-        .split(/[,;\t]|\s{2,}/)
-        .map((p) => p.trim().replace(/^["']|["']$/g, ''))
-        .filter(Boolean);
-
-      if (parts.length === 0) continue;
-      const combined = parts.join(' ').toLowerCase();
-      if (
-        combined.includes('họ và tên') ||
-        combined.includes('họ tên') ||
-        combined.includes('stt') ||
-        combined.includes('tên học sinh') ||
-        combined.includes('email học sinh')
-      ) {
-        continue;
-      }
-
-      let email = '';
-      let fullName = '';
-      let password = '123456';
-
-      const emailIdx = parts.findIndex((p) => p.includes('@'));
-      if (emailIdx !== -1) {
-        email = parts[emailIdx].toLowerCase();
-        const nameCandidates = parts.filter(
-          (p, idx) => idx !== emailIdx && !/^\d+$/.test(p) && p !== '123456'
-        );
-        if (nameCandidates.length > 0) {
-          fullName = nameCandidates.join(' ');
-        } else {
-          fullName = email.split('@')[0];
-        }
+    const emailIdx = parts.findIndex((p) => p.includes('@'));
+    if (emailIdx !== -1) {
+      email = parts[emailIdx].toLowerCase();
+      const nameCandidates = parts.filter(
+        (p, idx) => idx !== emailIdx && !/^\d+$/.test(p) && p !== '123456'
+      );
+      if (nameCandidates.length > 0) {
+        fullName = nameCandidates.join(' ');
       } else {
-        const nameCandidates = parts.filter((p) => !/^\d+$/.test(p));
-        if (nameCandidates.length > 0) {
-          fullName = nameCandidates.join(' ');
-        } else {
-          fullName = `Học sinh ${i + 1}`;
-        }
-        const slugName = removeVietnameseAccents(fullName) || `hocsinh_${i + 1}`;
-        const randomCode = Math.floor(1000 + Math.random() * 9000);
-        email = `hs_${slugName}_${randomCode}@hanhtrinhtoanhoc.edu.vn`;
+        fullName = email.split('@')[0];
       }
-
-      if (fullName && email) {
-        results.push({ fullName, email, password });
+    } else {
+      const nameCandidates = parts.filter((p) => !/^\d+$/.test(p));
+      if (nameCandidates.length > 0) {
+        fullName = nameCandidates.join(' ');
+      } else {
+        fullName = `Học sinh ${lineIndex + 1}`;
       }
+      const slugName = removeVietnameseAccents(fullName) || `hocsinh_${lineIndex + 1}`;
+      const randomCode = Math.floor(1000 + Math.random() * 9000);
+      email = `hs_${slugName}_${randomCode}@hanhtrinhtoanhoc.edu.vn`;
     }
 
-    return results;
+    return { fullName, email, password };
   };
 
-  const handleImportExcel = async () => {
-    if (!excelContent.trim() || !selectedClass) return;
+  const handleImportCsv = async () => {
+    if (!csvContent.trim() || !selectedClass) return;
 
-    const studentList = parseAllStudents(excelContent, selectedClass.code);
+    // Detect binary content from .xlsx file uploaded directly
+    if (csvContent.startsWith('PK') || csvContent.includes('xl/')) {
+      alert(
+        '⚠️ NỘI DUNG ĐANG LÀ FILE EXCEL NGUYÊN BẢN (.xlsx):\n\n' +
+        'Vui lòng mở file Excel đó, chọn File -> Save As -> lưu dạng "CSV (UTF-8)" HOẶC bôi đen copy toàn bộ cột danh sách và dán vào ô bên dưới nhé!'
+      );
+      return;
+    }
+
+    const rawLines = csvContent.split('\n');
     let createdCount = 0;
     let addedCount = 0;
     let alreadyInClassCount = 0;
-    let totalValidLines = studentList.length;
+    let totalValidLines = 0;
+    let questionMarkNamesCount = 0;
 
-    for (let i = 0; i < studentList.length; i++) {
-      const { fullName, email } = studentList[i];
+    for (let i = 0; i < rawLines.length; i++) {
+      const parsed = parseStudentLine(rawLines[i], selectedClass.code, i);
+      if (!parsed) continue;
+
+      totalValidLines++;
+      const { fullName, email } = parsed;
+
+      if (fullName.includes('?')) {
+        questionMarkNamesCount++;
+      }
 
       try {
         let { data: studentProfile } = await supabase
@@ -365,32 +345,45 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
       }
     }
 
-    if (addedCount > 0) {
+    if (questionMarkNamesCount > 0) {
+      alert(
+        `⚠️ CẢNH BÁO MẤT DẤU TIẾNG VIỆT TỪ EXCEL:\n\n` +
+        `Có ${questionMarkNamesCount} tên học sinh bị phần mềm Excel tự chuyển thành dấu '?' (Ví dụ: Ph?m Minh T?i).\n` +
+        `Nguyên nhân: Do khi dùng "Save As CSV", phần mềm Excel trên Windows tự mã hóa mất dấu tiếng Việt.\n\n` +
+        `💡 CÁCH SỬA SIÊU NHANH TRONG 5 GIÂY (100% GIỮ ĐỦ DẤU TIẾNG VIỆT):\n` +
+        `1. Mở file Excel gốc của bạn trên máy tính (file gốc vẫn giữ nguyên tên có dấu đầy đủ).\n` +
+        `2. Bôi đen copy các cột danh sách (Ctrl + C).\n` +
+        `3. Trên trang web này, bấm nút "Dán Mã CSV" -> Dán (Ctrl + V) vào ô văn bản -> Bấm XÁC NHẬN là xong!`
+      );
+    } else if (addedCount > 0) {
       alert(`🎉 THÀNH CÔNG! Đã thêm thành công ${addedCount}/${totalValidLines} học sinh vào lớp "${selectedClass.name}"!\n(${createdCount} tài khoản mới được tự động tạo)`);
     } else if (alreadyInClassCount > 0) {
       alert(`ℹ️ THÔNG BÁO: Tất cả ${alreadyInClassCount} học sinh trong danh sách đã có tên trong lớp "${selectedClass.name}" từ trước rồi!`);
     } else {
-      alert(`⚠️ CHÚ Ý: Không thêm được học sinh nào vào lớp. Vui lòng kiểm tra lại dữ liệu file Excel! (Hỗ trợ cột dạng: "STT", "Họ và Tên", "Email")`);
+      alert(`⚠️ CHÚ Ý: Không thêm được học sinh nào vào lớp. Vui lòng kiểm tra lại nội dung file! (Hỗ trợ dạng: "STT, Họ và Tên, Email" HOẶC chỉ cần "Họ và Tên")`);
     }
 
-    setExcelContent('');
-    setShowExcelImport(false);
+    setCsvContent('');
+    setShowCsvImport(false);
     fetchMembers(selectedClass.id);
     fetchClasses();
   };
 
-  const downloadTemplateExcel = () => {
-    const data = [
-      ['STT', 'Họ và Tên', 'Email', 'Mật Khẩu Mặc Định'],
-      [1, 'Nguyễn Văn An', 'an.lop2a1@gmail.com', '123456'],
-      [2, 'Lê Thị Bình', 'binh.lop2a1@gmail.com', '123456'],
-      [3, 'Trần Hoàng Cường', 'cuong.lop2a1@gmail.com', '123456'],
-    ];
+  const downloadTemplateCsv = () => {
+    let template = '\uFEFF'; // UTF-8 BOM for Windows Excel compatibility
+    template += 'STT,Họ và Tên,Email,Mật Khẩu Mặc Định\n';
+    template += '1,Nguyễn Văn An,an.lop2a1@gmail.com,123456\n';
+    template += '2,Lê Thị Bình,binh.lop2a1@gmail.com,123456\n';
+    template += '3,Trần Hoàng Cường,cuong.lop2a1@gmail.com,123456\n';
 
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Mau_Danh_Sach_Hoc_Sinh');
-    XLSX.writeFile(workbook, 'Mau_Danh_Sach_Hoc_Sinh_Excel.xlsx');
+    const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'Mau_Danh_Sach_Hoc_Sinh_CSV_Excel.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleRemoveStudent = async (memberId: string) => {
@@ -413,51 +406,71 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
     const file = e.target.files?.[0];
     if (!file) return;
 
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+      alert(
+        '⚠️ BẠN ĐANG CHỌN FILE EXCEL (.xlsx / .xls):\n\n' +
+        'Trình duyệt đọc file này dưới dạng dữ liệu nén. Để nhập thành công 100%, thầy/Cô hãy chọn 1 trong 2 cách siêu nhanh sau:\n\n' +
+        '1️⃣ Cách 1 (Nhanh nhất): Mở file Excel, bôi đen copy toàn bộ cột danh sách, sau đó bấm nút "Dán Mã CSV" trên web và dán vào ô văn bản!\n' +
+        '2️⃣ Cách 2: Trong phần mềm Excel, chọn File -> Save As -> chọn định dạng "CSV UTF-8 (Comma delimited)" rồi tải file CSV đó lên web.'
+      );
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      try {
-        const buffer = event.target?.result as ArrayBuffer;
-        if (!buffer) return;
+      const buffer = event.target?.result as ArrayBuffer;
+      if (!buffer) return;
 
-        // Doc file Excel (.xlsx, .xls) hoac CSV, TSV, TXT qua XLSX library
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
+      const uint8 = new Uint8Array(buffer);
 
-        const csvText = XLSX.utils.sheet_to_csv(worksheet);
-        if (csvText && csvText.trim()) {
-          setExcelContent(csvText);
-          setShowExcelImport(true);
-        } else {
-          alert('⚠️ File Excel rỗng hoặc không có dữ liệu!');
+      let text = '';
+      if (uint8[0] === 0xFF && uint8[1] === 0xFE) {
+        text = new TextDecoder('utf-16le').decode(uint8);
+      } else if (uint8[0] === 0xFE && uint8[1] === 0xFF) {
+        text = new TextDecoder('utf-16be').decode(uint8);
+      } else {
+        try {
+          const decoderUtf8 = new TextDecoder('utf-8', { fatal: true });
+          text = decoderUtf8.decode(uint8);
+        } catch (err) {
+          try {
+            text = new TextDecoder('windows-1258').decode(uint8);
+          } catch (e2) {
+            text = new TextDecoder('utf-8').decode(uint8);
+          }
         }
-      } catch (err) {
-        console.error('Lỗi khi đọc file Excel:', err);
-        alert('❌ Không thể mở file Excel này. Vui lòng kiểm tra file có đúng định dạng .xlsx / .xls không!');
+      }
+
+      if (text) {
+        setCsvContent(text);
+        setShowCsvImport(true);
       }
     };
     reader.readAsArrayBuffer(file);
     e.target.value = '';
   };
 
-  const exportToExcel = () => {
+  const exportToCsv = () => {
     if (!selectedClass || members.length === 0) return alert('Lớp chưa có học sinh nào để xuất file.');
 
-    const data = [
-      ['STT', 'Họ và Tên', 'Email', 'Ngày Tham Gia'],
-      ...members.map((m, idx) => [
-        idx + 1,
-        m.student?.full_name || 'Học sinh',
-        m.student?.email || '',
-        new Date(m.joined_at).toLocaleDateString('vi-VN'),
-      ]),
-    ];
+    let csv = '\uFEFF'; // UTF-8 BOM for Windows Excel compatibility
+    csv += 'STT,Họ và Tên,Email,Ngày Tham Gia\n';
 
-    const worksheet = XLSX.utils.aoa_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'DanhSachHocSinh');
+    members.forEach((m, idx) => {
+      const name = `"${(m.student?.full_name || 'Học sinh').replace(/"/g, '""')}"`;
+      const email = `"${(m.student?.email || '').replace(/"/g, '""')}"`;
+      const date = `"${new Date(m.joined_at).toLocaleDateString('vi-VN')}"`;
+      csv += `${idx + 1},${name},${email},${date}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
     const safeName = selectedClass.name.replace(/\s+/g, '_');
-    XLSX.writeFile(workbook, `Danh_Sach_Hoc_Sinh_${safeName}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    link.setAttribute('download', `Danh_Sach_Hoc_Sinh_${safeName}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const copyClassCode = () => {
@@ -469,6 +482,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
 
   return (
     <div className="space-y-6">
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 font-display">
@@ -476,7 +490,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
             <span>Quản Lý Lớp Học & Mã Gia Nhập</span>
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Tạo lớp, cung cấp Mã Gia Nhập (Join Code) cho học sinh hoặc Tải lên danh sách từ file Excel.
+            Tạo lớp, cung cấp Mã Gia Nhập (Join Code) cho học sinh hoặc Import danh sách Email/CSV.
           </p>
         </div>
 
@@ -490,6 +504,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Class List Card */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center justify-between">
             <span>Danh Sách Lớp Học</span>
@@ -535,9 +550,11 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
           )}
         </div>
 
+        {/* Student Roster & Add Methods */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           {selectedClass ? (
             <div className="space-y-6">
+              {/* Selected Class Header Info */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 rounded-xl bg-slate-50 border border-slate-200 gap-4">
                 <div>
                   <h3 className="text-xl font-bold text-slate-900">{selectedClass.name}</h3>
@@ -562,6 +579,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                 </div>
               </div>
 
+              {/* Add Methods Bar */}
               <div className="space-y-3">
                 <form onSubmit={handleAddStudent} className="bg-sky-50/50 p-4 rounded-xl border border-sky-100">
                   <div className="flex justify-between items-center mb-2">
@@ -572,7 +590,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                     <div className="flex items-center space-x-2">
                       <input
                         type="file"
-                        accept=".xlsx,.xls,.csv,.txt"
+                        accept=".csv,.txt,.tsv,.xlsx,.xls"
                         ref={fileInputRef}
                         onChange={handleFileSelect}
                         className="hidden"
@@ -580,20 +598,20 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-xs font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-300 transition-all flex items-center gap-1 shadow-2xs cursor-pointer"
-                        title="Chọn file Excel (.xlsx, .xls) từ máy tính"
+                        className="text-xs font-bold bg-sky-100 hover:bg-sky-200 text-sky-800 px-3 py-1.5 rounded-lg border border-sky-300 transition-all flex items-center gap-1 shadow-2xs"
+                        title="Chọn file CSV / Excel / TXT chứa danh sách từ máy tính"
                       >
-                        <Upload className="w-3.5 h-3.5 text-emerald-700" />
-                        <span>📂 Chọn File Excel Tải Lên</span>
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>📂 Chọn File Danh Sách (CSV/Excel)</span>
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => setShowExcelImport(!showExcelImport)}
-                        className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1 cursor-pointer"
+                        onClick={() => setShowCsvImport(!showCsvImport)}
+                        className="text-xs font-bold text-sky-700 hover:text-sky-900 flex items-center gap-1"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5" />
-                        {showExcelImport ? 'Ẩn Dán Excel' : 'Dán Dữ Liệu Excel'}
+                        {showCsvImport ? 'Ẩn Dán CSV' : 'Dán Mã CSV'}
                       </button>
                     </div>
                   </div>
@@ -621,23 +639,23 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                   )}
                 </form>
 
-                {/* Excel Import Box */}
-                {showExcelImport && (
+                {/* CSV Import Modal / Box */}
+                {showCsvImport && (
                   <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-4 shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-sky-200/80">
                       <div>
                         <span className="font-extrabold text-sm text-sky-950 flex items-center gap-1.5 font-display">
                           <FileSpreadsheet className="w-4 h-4 text-sky-600" />
-                          <span>Tự Động Tạo Tài Khoản & Nhập Lớp Hàng Loạt Từ File Excel</span>
+                          <span>Tự Động Tạo Tài Khoản & Nhập Lớp Hàng Loạt Từ CSV / Excel</span>
                         </span>
                         <p className="text-xs text-slate-500 mt-0.5">
-                          💡 Hỗ trợ: Đọc trực tiếp file Excel (.xlsx, .xls) hoặc dán trực tiếp dữ liệu từ bảng Excel
+                          💡 Hỗ trợ: Dán trực tiếp từ Excel (dấu Tab không cần phẩy), dấu phẩy (,), hoặc chỉ cần Họ và Tên
                         </p>
                       </div>
 
                       <button
                         type="button"
-                        onClick={downloadTemplateExcel}
+                        onClick={downloadTemplateCsv}
                         className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl shadow-md transition-all flex items-center space-x-1.5 shrink-0 active:scale-95 cursor-pointer"
                       >
                         <Download className="w-4 h-4" />
@@ -646,8 +664,8 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                     </div>
 
                     <textarea
-                      value={excelContent}
-                      onChange={(e) => setExcelContent(e.target.value)}
+                      value={csvContent}
+                      onChange={(e) => setCsvContent(e.target.value)}
                       rows={5}
                       placeholder="1, Nguyễn Văn An, an.lop2a1@gmail.com, 123456&#10;2, Lê Thị Bình, binh.lop2a1@gmail.com, 123456&#10;3, Trần Hoàng Cường, cuong.lop2a1@gmail.com, 123456"
                       className="w-full p-3 rounded-xl border border-sky-200 text-xs font-mono bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -658,7 +676,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                         💡 Hệ thống sẽ tự tạo mới tài khoản học sinh nếu chưa có và tự động vào lớp {selectedClass.name}!
                       </span>
                       <button
-                        onClick={handleImportExcel}
+                        onClick={handleImportCsv}
                         className="bg-sky-600 hover:bg-sky-700 text-white font-extrabold px-5 py-2.5 rounded-xl text-xs shadow-md active:scale-95 transition-all cursor-pointer"
                       >
                         ⚡ XÁC NHẬN TẠO TÀI KHOẢN & NHẬP LỚP
@@ -668,15 +686,16 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
                 )}
               </div>
 
+              {/* Members Roster Table */}
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h4 className="text-sm font-bold text-slate-800">Sĩ Số Học Sinh Thuộc Lớp</h4>
                   <button
-                    onClick={exportToExcel}
+                    onClick={exportToCsv}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl border border-emerald-500 shadow-md transition-all flex items-center space-x-1.5 active:scale-95 cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
-                    <span>📊 XUẤT FILE DANH SÁCH LỚP (EXCEL)</span>
+                    <span>📊 XUẤT FILE DANH SÁCH LỚP (EXCEL/CSV)</span>
                   </button>
                 </div>
                 {members.length === 0 ? (
@@ -728,6 +747,7 @@ export const ClassManagement: React.FC<ClassManagementProps> = ({ onSelectClass,
         </div>
       </div>
 
+      {/* Modal Create Class */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-6">
