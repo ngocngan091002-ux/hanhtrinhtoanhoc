@@ -3,7 +3,7 @@ import { useAuth } from './AuthContext';
 import { isSupabaseConfigured } from '../../config/supabase';
 import { UserRole } from '../../types';
 import { KidsMindHero } from '../../components/common/KidsMindHero';
-import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound, ArrowRight } from 'lucide-react';
+import { GraduationCap, School, Sparkles, Mail, Lock, User as UserIcon, CheckCircle2, AlertCircle, KeyRound, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const REMEMBERED_EMAIL_KEY = 'hanhtrinhtoanhoc_remembered_email';
 const REMEMBERED_PASSWORD_KEY = 'hanhtrinhtoanhoc_remembered_password';
